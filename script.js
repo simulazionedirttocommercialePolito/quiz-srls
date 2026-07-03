@@ -5378,22 +5378,46 @@ function showResults() {
 
 // 5. FUNZIONI PAGAMENTO E ACCESSO
 async function pagaConStars() {
-    // ... (tutto il codice di chiamata fino a openInvoice) ...
+    console.log("--- 1. Click ricevuto ---");
     
-    // MODIFICA QUI: Aggiungi questa callback
-    window.Telegram.WebApp.openInvoice(data.url, async (status) => {
-        console.log("Stato pagamento Telegram:", status);
-        
-        if (status === 'paid') {
-            alert("Pagamento riuscito! Caricamento quiz...");
-            // Non aspettiamo il server: sblocchiamo subito lato client
-            mostraQuiz(); 
-        } else {
-            console.log("Pagamento non completato (stato):", status);
-        }
-    });
-}
+    // Mostra il caricamento
+    window.Telegram.WebApp.MainButton.showProgress();
 
+    try {
+        console.log("--- 2. Chiamata API in corso ---");
+        
+        const user = window.Telegram.WebApp.initDataUnsafe.user;
+        if (!user) throw new Error("Utente non trovato, apri da Telegram");
+
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id })
+        });
+
+        console.log("--- 3. Risposta ricevuta. Status:", response.status, " ---");
+
+        if (!response.ok) {
+            throw new Error(`Errore Server: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("--- 4. Dati ricevuti dal server:", data, " ---");
+
+        if (data && data.url) {
+            console.log("--- 5. Apertura Invoice in corso... ---");
+            window.Telegram.WebApp.openInvoice(data.url);
+        } else {
+            throw new Error("Il server non ha restituito l'URL (data.url è vuoto)");
+        }
+
+    } catch (error) {
+        console.error("--- ERRORE FATALE ---", error);
+        alert("Errore nel pagamento: " + error.message);
+    } finally {
+        window.Telegram.WebApp.MainButton.hideProgress();
+    }
+}
 async function checkAccess() {
     const user = window.Telegram.WebApp.initDataUnsafe.user;
     
