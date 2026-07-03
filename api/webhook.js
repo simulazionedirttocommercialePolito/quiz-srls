@@ -1,3 +1,8 @@
+export default async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).end();
+    
+    // LOG UNIVERSALE: Stampa tutto quello che arriva da Telegram
+    console.log("PAYLOAD RICEVUTO DA TELEGRAM:", JSON.stringify(req.body, null, 2));
 import { createClient } from '@supabase/supabase-js';
 
 // Inizializziamo il client una sola volta per migliorare le performance
