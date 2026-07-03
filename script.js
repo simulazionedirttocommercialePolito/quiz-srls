@@ -5378,46 +5378,52 @@ function showResults() {
 
 // 5. FUNZIONI PAGAMENTO E ACCESSO
 async function pagaConStars() {
-    console.log("--- 1. Click ricevuto ---");
+    console.log("--- Inizio procedura PagaConStars ---");
     
-    // Mostra il caricamento
+    // 1. Controllo base: siamo dentro Telegram?
+    if (!window.Telegram.WebApp.initDataUnsafe?.user) {
+        console.error("ERRORE: initDataUnsafe non trovato. Stai aprendo il bot da Telegram?");
+        alert("Errore: Apri l'app tramite Telegram.");
+        return;
+    }
+
     window.Telegram.WebApp.MainButton.showProgress();
 
     try {
-        console.log("--- 2. Chiamata API in corso ---");
+        console.log("2. Invio richiesta al server...");
+        const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
         
-        const user = window.Telegram.WebApp.initDataUnsafe.user;
-        if (!user) throw new Error("Utente non trovato, apri da Telegram");
-
         const response = await fetch('/api/create-invoice', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id })
+            body: JSON.stringify({ userId: userId })
         });
 
-        console.log("--- 3. Risposta ricevuta. Status:", response.status, " ---");
-
-        if (!response.ok) {
-            throw new Error(`Errore Server: ${response.status}`);
-        }
+        if (!response.ok) throw new Error("Risposta server non valida: " + response.status);
 
         const data = await response.json();
-        console.log("--- 4. Dati ricevuti dal server:", data, " ---");
+        console.log("3. Risposta ricevuta:", data);
 
-        if (data && data.url) {
-            console.log("--- 5. Apertura Invoice in corso... ---");
-            window.Telegram.WebApp.openInvoice(data.url);
-        } else {
-            throw new Error("Il server non ha restituito l'URL (data.url è vuoto)");
-        }
+        if (!data.url) throw new Error("URL mancante nella risposta del server");
 
-    } catch (error) {
-        console.error("--- ERRORE FATALE ---", error);
-        alert("Errore nel pagamento: " + error.message);
+        // 4. Apertura Invoice
+        console.log("4. Tentativo apertura Invoice:", data.url);
+        window.Telegram.WebApp.openInvoice(data.url, (status) => {
+            console.log("5. Esito pagamento da Telegram:", status);
+            if (status === 'paid') {
+                alert("Pagamento riuscito!");
+                mostraQuiz();
+            }
+        });
+
+    } catch (err) {
+        console.error("--- ERRORE CRITICO NELLO SCRIPT ---", err);
+        alert("Errore durante il pagamento: " + err.message);
     } finally {
         window.Telegram.WebApp.MainButton.hideProgress();
     }
 }
+
 async function checkAccess() {
     const user = window.Telegram.WebApp.initDataUnsafe.user;
     
