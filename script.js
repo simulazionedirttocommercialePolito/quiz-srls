@@ -1,3 +1,38 @@
+// Aggiungi queste variabili (usa le tue chiavi pubbliche di Supabase)
+const SUPABASE_URL = "LA_TUA_URL_SUPABASE";
+const SUPABASE_KEY = "LA_TUA_ANON_KEY";
+
+// Questa è la funzione che "protegge" l'app
+async function checkAccess() {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    
+    // Se per qualche motivo non rileva l'utente, blocca comunque
+    if (!user) {
+        document.body.innerHTML = "<h1>Errore: Impossibile identificare l'utente.</h1>";
+        return;
+    }
+
+    // Controlla su Supabase se l'utente è nella lista dei paganti
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        }
+    });
+    
+    const data = await response.json();
+
+    if (data.length > 0) {
+        // L'utente HA PAGATO: mostriamo il quiz
+        mostraQuiz(); 
+    } else {
+        // L'utente NON HA PAGATO: mostriamo il tasto di pagamento
+        mostraPagamento();
+    }
+}
+
+// Chiamiamo il controllo appena l'app si apre
+checkAccess();
 async function pagaConStars() {
     const user = window.Telegram.WebApp.initDataUnsafe.user;
     
