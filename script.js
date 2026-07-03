@@ -5378,46 +5378,20 @@ function showResults() {
 
 // 5. FUNZIONI PAGAMENTO E ACCESSO
 async function pagaConStars() {
-    console.log("1. Inizio procedura di pagamento...");
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    // ... (tutto il codice di chiamata fino a openInvoice) ...
     
-    // Mostra il caricamento (la rotella)
-    window.Telegram.WebApp.MainButton.showProgress();
-
-    try {
-        console.log("2. Invio richiesta a /api/create-invoice...");
+    // MODIFICA QUI: Aggiungi questa callback
+    window.Telegram.WebApp.openInvoice(data.url, async (status) => {
+        console.log("Stato pagamento Telegram:", status);
         
-        const response = await fetch('/api/create-invoice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id })
-        });
-
-        console.log("3. Risposta ricevuta. Status:", response.status);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server ha risposto ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log("4. Dati ricevuti dal server:", data);
-
-        // CORREZIONE QUI: Controlliamo .url perché il server invia .url
-        if (data.url) {
-            console.log("5. Apro l'invoice con URL:", data.url);
-            window.Telegram.WebApp.openInvoice(data.url);
+        if (status === 'paid') {
+            alert("Pagamento riuscito! Caricamento quiz...");
+            // Non aspettiamo il server: sblocchiamo subito lato client
+            mostraQuiz(); 
         } else {
-            throw new Error("Il server non ha restituito un URL valido. Dati ricevuti: " + JSON.stringify(data));
+            console.log("Pagamento non completato (stato):", status);
         }
-
-    } catch (error) {
-        console.error("ERRORE CRITICO:", error);
-        alert("Errore: " + error.message); 
-    } finally {
-        window.Telegram.WebApp.MainButton.hideProgress();
-        console.log("Procedura terminata.");
-    }
+    });
 }
 
 async function checkAccess() {

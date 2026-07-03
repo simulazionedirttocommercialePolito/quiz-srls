@@ -1,28 +1,27 @@
-export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).end();
-    
-    // LOG UNIVERSALE: Stampa tutto quello che arriva da Telegram
-    console.log("PAYLOAD RICEVUTO DA TELEGRAM:", JSON.stringify(req.body, null, 2));
 import { createClient } from '@supabase/supabase-js';
 
-// Inizializziamo il client una sola volta per migliorare le performance
+// Inizializza Supabase una sola volta
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 export default async function handler(req, res) {
-    // Telegram invia i webhook tramite POST
+    // 1. Controlla che sia un POST
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
+    // 2. LOG DI DEBUG (Fondamentale!)
+    // Questo ti mostrerà esattamente cosa sta arrivando da Telegram nei log di Vercel
+    console.log("PAYLOAD RICEVUTO:", JSON.stringify(req.body, null, 2));
+
     const { message } = req.body;
 
-    // Verifichiamo se è un pagamento riuscito
-    if (message?.successful_payment) {
+    // 3. Verifichiamo se c'è un pagamento riuscito
+    if (message && message.successful_payment) {
         const userId = message.from.id;
 
         try {
-            // Usiamo upsert: se l'ID esiste già non succede nulla, 
-            // se non esiste lo crea. È più sicuro di insert.
+            console.log(`Tentativo inserimento DB per utente: ${userId}`);
+            
             const { error } = await supabase
                 .from('utenti_paganti')
                 .upsert(
@@ -32,8 +31,8 @@ export default async function handler(req, res) {
 
             if (error) throw error;
 
-            console.log(`Pagamento confermato per l'utente: ${userId}`);
-            return res.status(200).json({ status: 'success', message: 'User added' });
+            console.log(`Pagamento confermato e salvato per: ${userId}`);
+            return res.status(200).json({ status: 'success' });
 
         } catch (err) {
             console.error('Errore durante l\'aggiornamento del DB:', err);
@@ -41,7 +40,6 @@ export default async function handler(req, res) {
         }
     }
 
-    // Se Telegram invia altri tipi di messaggi (che non sono pagamenti),
-    // rispondiamo comunque 200 per dire "abbiamo ricevuto, tutto ok"
+    // Risposta standard per altri messaggi
     return res.status(200).json({ status: 'ignored' });
 }
