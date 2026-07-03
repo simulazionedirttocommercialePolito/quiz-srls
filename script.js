@@ -1,3 +1,26 @@
+// Aggiungi questo controllo all'inizio di script.js
+function checkAccess() {
+    // Verifica se l'app è aperta in Telegram (tramite l'oggetto Telegram.WebApp)
+    if (window.Telegram.WebApp.initData === "") {
+        // Se initData è vuoto, significa che non siamo in Telegram
+        document.body.innerHTML = `
+            <div style="text-align:center; padding-top: 50px; font-family: sans-serif;">
+                <h1>Accesso Negato 🚫</h1>
+                <p>Questa applicazione è accessibile solo tramite il bot Telegram ufficiale.</p>
+            </div>
+        `;
+        return false; // Blocca tutto
+    }
+    return true; // Accesso consentito
+}
+
+// Chiama il controllo prima di avviare il quiz
+if (checkAccess()) {
+    // Inserisci qui tutto il resto del tuo codice esistente
+    // (startSimulation, showQuestion, ecc...)
+    window.Telegram.WebApp.expand();
+    // ...
+}
 const quizData = [
       {
         q: "Il diritto commerciale regola:",
