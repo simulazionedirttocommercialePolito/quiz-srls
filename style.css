@@ -1,0 +1,8 @@
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f2f5; padding: 20px; }
+#app { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+button { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; background: #2481cc; color: white; font-size: 16px; cursor: pointer; }
+button:hover { background: #1a6dae; }
+#info-box { background: #e7f3ff; padding: 15px; border-radius: 8px; margin: 10px 0; font-size: 14px; color: #333; }
+#progress { font-weight: bold; color: #666; margin-bottom: 10px; }
+.correct { background: #28a745 !important; }
+.wrong { background: #dc3545 !important; }

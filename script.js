@@ -5303,29 +5303,68 @@ const quizData = [
     
 ];
 
-let currentQuestionIndex = 0;
-const container = document.getElementById('quiz-container');
+let selectedQuestions = [];
+let currentIndex = 0;
+let score = 0;
 
-function showQuestion() {
-    const q = quizData[currentQuestionIndex];
-    let html = `<h3>${q.q}</h3>`;
-    q.options.forEach((opt, index) => {
-        html += `<button onclick="checkAnswer(${index})">${opt.text}</button>`;
-    });
-    container.innerHTML = html;
+function startSimulation() {
+    // Pesca 30 domande casuali
+    selectedQuestions = [...quizData].sort(() => Math.random() - 0.5).slice(0, 30);
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('quiz-screen').style.display = 'block';
+    showQuestion();
 }
 
-function checkAnswer(selectedIndex) {
-    const q = quizData[currentQuestionIndex];
-    const isCorrect = q.options[selectedIndex].correct;
-    alert(isCorrect ? "Corretto! ✅" : "Sbagliato ❌\n" + q.info);
-    currentQuestionIndex++;
-    if (currentQuestionIndex < quizData.length) {
+function showQuestion() {
+    const q = selectedQuestions[currentIndex];
+    document.getElementById('progress').innerText = `Domanda ${currentIndex + 1}/30`;
+    document.getElementById('question').innerText = q.q;
+    
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+    document.getElementById('feedback-container').style.display = 'none';
+    
+    q.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.innerText = opt.text;
+        btn.onclick = () => checkAnswer(index, btn);
+        container.appendChild(btn);
+    });
+}
+
+function checkAnswer(index, btn) {
+    const q = selectedQuestions[currentIndex];
+    const isCorrect = q.options[index].correct;
+    
+    // Disabilita tasti
+    document.querySelectorAll('#options-container button').forEach(b => b.disabled = true);
+    
+    if (isCorrect) {
+        score += 0.5;
+        btn.classList.add('correct');
+        document.getElementById('result-text').innerText = "Corretto! +0.5 punti";
+    } else {
+        btn.classList.add('wrong');
+        document.getElementById('result-text').innerText = "Sbagliato!";
+    }
+    
+    document.getElementById('info-box').innerText = q.info;
+    document.getElementById('feedback-container').style.display = 'block';
+}
+
+function nextQuestion() {
+    currentIndex++;
+    if (currentIndex < selectedQuestions.length) {
         showQuestion();
     } else {
-        container.innerHTML = "<h3>Quiz completato!</h3>";
+        showResults();
     }
 }
 
+function showResults() {
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'block';
+    document.getElementById('final-score').innerText = `Il tuo punteggio finale è: ${score} / 15`;
+}
+
 window.Telegram.WebApp.expand();
-showQuestion();
