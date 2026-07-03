@@ -18,7 +18,7 @@ export default async function handler(req, res) {
                 description: "Accesso illimitato al quiz",
                 payload: "user_payment_" + userId,
                 currency: "XTR", 
-                prices: [{ label: "Accesso", amount: 50 }]
+                prices: [{ label: "Accesso", amount: 1 }]
             })
         });
 
