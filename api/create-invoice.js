@@ -5,8 +5,7 @@ export default async function handler(req, res) {
     const BOT_TOKEN = process.env.BOT_TOKEN;
 
     if (!BOT_TOKEN) {
-        console.error("ERRORE: BOT_TOKEN non trovato nelle variabili di ambiente!");
-        return res.status(500).json({ error: "Configurazione server mancante" });
+        return res.status(500).json({ error: "BOT_TOKEN non configurato" });
     }
 
     try {
@@ -18,24 +17,23 @@ export default async function handler(req, res) {
                 description: "Accesso illimitato al quiz",
                 payload: "user_payment_" + userId,
                 currency: "XTR", 
-                prices: [{ label: "Accesso", amount: 1 }]
+                prices: [{ label: "Accesso", amount: 50 }] 
             })
         });
 
         const data = await response.json();
         
-        // Logga la risposta di Telegram per debuggare
-        console.log("Risposta da Telegram:", data);
-
+        // --- QUESTO È IL CONTROLLO CHE MANCAVA ---
         if (!data.ok) {
-             console.error("Telegram ha risposto con errore:", data.description);
-             return res.status(500).json({ error: data.description });
+            console.error("Errore da Telegram:", data.description);
+            return res.status(500).json({ error: "Telegram ha rifiutato la richiesta: " + data.description });
         }
+        // ------------------------------------------
 
-        res.status(200).json({ url: data.result });
-        
-    } catch (error) {
-        console.error("Errore fatale:", error);
-        res.status(500).json({ error: "Errore interno del server" });
+        return res.status(200).json({ url: data.result });
+
+    } catch (err) {
+        console.error("Errore server:", err);
+        return res.status(500).json({ error: err.message });
     }
 }
