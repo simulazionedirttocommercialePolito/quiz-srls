@@ -5378,14 +5378,46 @@ function showResults() {
 
 // 5. FUNZIONI PAGAMENTO E ACCESSO
 async function pagaConStars() {
+    console.log("1. Inizio procedura di pagamento...");
     const user = window.Telegram.WebApp.initDataUnsafe.user;
-    const response = await fetch('/api/create-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-    });
-    const data = await response.json();
-    window.Telegram.WebApp.openInvoice(data.url);
+    
+    // Mostra il caricamento (la rotella)
+    window.Telegram.WebApp.MainButton.showProgress();
+
+    try {
+        console.log("2. Invio richiesta a /api/create-invoice...");
+        
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id })
+        });
+
+        console.log("3. Risposta ricevuta. Status:", response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server ha risposto ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log("4. Dati ricevuti:", data);
+
+        if (data.url) {
+            console.log("5. Apro l'invoice...");
+            window.Telegram.WebApp.openInvoice(data.url);
+        } else {
+            throw new Error("Il server non ha restituito un URL valido.");
+        }
+
+    } catch (error) {
+        console.error("ERRORE CRITICO:", error);
+        alert("Errore: " + error.message); // Questo ti dice subito cosa non va
+    } finally {
+        // Questa parte viene eseguita SEMPRE, successo o errore
+        window.Telegram.WebApp.MainButton.hideProgress();
+        console.log("Procedura terminata.");
+    }
 }
 
 async function checkAccess() {
