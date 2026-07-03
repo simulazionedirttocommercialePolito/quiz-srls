@@ -1,3 +1,47 @@
+// Funzione per mostrare il quiz e nascondere il pagamento
+function mostraQuiz() {
+    document.getElementById('quiz-container').style.display = 'block';
+    document.getElementById('payment-container').style.display = 'none';
+}
+
+// Funzione per mostrare il pagamento e nascondere il quiz
+function mostraPagamento() {
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('payment-container').style.display = 'block';
+}
+
+// IL TUO GUARDIANO (Aggiornato)
+async function checkAccess() {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    
+    if (!user) {
+        document.body.innerHTML = "<h1>Errore di connessione a Telegram</h1>";
+        return;
+    }
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        
+        const data = await response.json();
+
+        if (data.length > 0) {
+            mostraQuiz(); // L'utente ha pagato, apri il quiz
+        } else {
+            mostraPagamento(); // L'utente NON ha pagato, mostra il tasto paga
+        }
+    } catch (error) {
+        console.error("Errore nel controllo:", error);
+        mostraPagamento(); // In caso di errore, meglio bloccare
+    }
+}
+
+// Avvia tutto all'apertura
+checkAccess();
 // Aggiungi queste variabili (usa le tue chiavi pubbliche di Supabase)
 const SUPABASE_URL = "LA_TUA_URL_SUPABASE";
 const SUPABASE_KEY = "LA_TUA_ANON_KEY";

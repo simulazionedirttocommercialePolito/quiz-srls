@@ -8,6 +8,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+<div id="quiz-container" style="display: none;">
     <div id="app">
         <div id="start-screen">
             <h1>Simulazione DIRITTO COMMERCIALE</h1>
@@ -32,6 +33,13 @@
             <p id="final-score"></p>
             <button onclick="location.reload()">Riprova</button>
         </div>
+    </div>
+</div>
+
+    <div id="payment-container" style="display: none; text-align: center; margin-top: 50px;">
+        <h1>Accesso Riservato</h1>
+        <p>Per continuare, sblocca il quiz con le Telegram Stars.</p>
+        <button onclick="pagaConStars()" style="padding: 15px; font-size: 20px;">Paga Ora</button>
     </div>
     <script src="script.js"></script>
 </body>
