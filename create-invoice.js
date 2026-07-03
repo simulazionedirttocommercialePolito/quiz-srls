@@ -4,18 +4,38 @@ export default async function handler(req, res) {
     const { userId } = req.body;
     const BOT_TOKEN = process.env.BOT_TOKEN;
 
-    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            title: "Accesso Quiz",
-            description: "Accesso illimitato al quiz",
-            payload: "user_payment_" + userId,
-            currency: "XTR", // Questo indica che vuoi Telegram Stars
-            prices: [{ label: "Accesso", amount: 50 }] // Costo: 50 Stars (cambia il numero se vuoi)
-        })
-    });
+    if (!BOT_TOKEN) {
+        console.error("ERRORE: BOT_TOKEN non trovato nelle variabili di ambiente!");
+        return res.status(500).json({ error: "Configurazione server mancante" });
+    }
 
-    const data = await response.json();
-    res.status(200).json({ url: data.result });
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: "Accesso Quiz",
+                description: "Accesso illimitato al quiz",
+                payload: "user_payment_" + userId,
+                currency: "XTR", 
+                prices: [{ label: "Accesso", amount: 50 }]
+            })
+        });
+
+        const data = await response.json();
+        
+        // Logga la risposta di Telegram per debuggare
+        console.log("Risposta da Telegram:", data);
+
+        if (!data.ok) {
+             console.error("Telegram ha risposto con errore:", data.description);
+             return res.status(500).json({ error: data.description });
+        }
+
+        res.status(200).json({ url: data.result });
+        
+    } catch (error) {
+        console.error("Errore fatale:", error);
+        res.status(500).json({ error: "Errore interno del server" });
+    }
 }
