@@ -5425,27 +5425,50 @@ async function pagaConStars() {
 }
 
 async function checkAccess() {
-    // Aggiungi un controller di timeout
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    
+    // Controllo di sicurezza: se non c'è user, non possiamo fare nulla
+    if (!user) {
+        console.error("Utente non trovato, apri l'app da Telegram.");
+        return;
+    }
+
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000); // Se dopo 8 secondi non risponde, molla la presa
+    const id = setTimeout(() => controller.abort(), 8000); 
 
     try {
+        // RICORDA: SUPABASE_URL deve essere "https://...supabase.co" SENZA /rest/v1/
         const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
-            signal: controller.signal, // Collega il timeout
+            signal: controller.signal,
             headers: { 
                 'apikey': SUPABASE_KEY, 
-                'Authorization': `Bearer ${SUPABASE_KEY}` 
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
             }
         });
-        clearTimeout(id); // Se ha risposto, ferma il timer
+
+        clearTimeout(id); // Se ha risposto, fermiamo il timer
+
+        if (!response.ok) throw new Error(`Errore Server: ${response.status}`);
         
         const data = await response.json();
-        // ... resto del codice ...
+        
+        // LOGICA DI SBLOCCO
+        if (data && data.length > 0) {
+            console.log("Accesso rilevato nel DB, sblocco quiz...");
+            mostraQuiz(); // Funzione che sblocca il quiz
+        } else {
+            console.log("Utente non trovato nel DB, mostro schermata di pagamento.");
+            document.getElementById('payment-container').style.display = 'block';
+        }
+
     } catch (error) {
         if (error.name === 'AbortError') {
-            console.log("Il server ha impiegato troppo tempo, riprova!");
+            console.error("Il server Supabase ha impiegato troppo tempo (timeout).");
+            alert("Connessione lenta, riprova.");
         } else {
             console.error("Errore di rete:", error);
+            // Non blocchiamo l'app, magari riproviamo tra un po'
         }
     }
 }
