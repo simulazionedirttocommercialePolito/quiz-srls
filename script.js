@@ -1,120 +1,11 @@
-// Funzione per mostrare il quiz e nascondere il pagamento
-function mostraQuiz() {
-    document.getElementById('quiz-container').style.display = 'block';
-    document.getElementById('payment-container').style.display = 'none';
-}
+// 1. CONFIGURAZIONE (Inserisci qui le tue chiavi vere!)
+const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
 
-// Funzione per mostrare il pagamento e nascondere il quiz
-function mostraPagamento() {
-    document.getElementById('quiz-container').style.display = 'none';
-    document.getElementById('payment-container').style.display = 'block';
-}
-
-// IL TUO GUARDIANO (Aggiornato)
-async function checkAccess() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    
-    if (!user) {
-        document.body.innerHTML = "<h1>Errore di connessione a Telegram</h1>";
-        return;
-    }
-
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
-        });
-        
-        const data = await response.json();
-
-        if (data.length > 0) {
-            mostraQuiz(); // L'utente ha pagato, apri il quiz
-        } else {
-            mostraPagamento(); // L'utente NON ha pagato, mostra il tasto paga
-        }
-    } catch (error) {
-        console.error("Errore nel controllo:", error);
-        mostraPagamento(); // In caso di errore, meglio bloccare
-    }
-}
-
-// Avvia tutto all'apertura
-checkAccess();
-// Aggiungi queste variabili (usa le tue chiavi pubbliche di Supabase)
-const SUPABASE_URL = "LA_TUA_URL_SUPABASE";
-const SUPABASE_KEY = "LA_TUA_ANON_KEY";
-
-// Questa è la funzione che "protegge" l'app
-async function checkAccess() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    
-    // Se per qualche motivo non rileva l'utente, blocca comunque
-    if (!user) {
-        document.body.innerHTML = "<h1>Errore: Impossibile identificare l'utente.</h1>";
-        return;
-    }
-
-    // Controlla su Supabase se l'utente è nella lista dei paganti
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-        }
-    });
-    
-    const data = await response.json();
-
-    if (data.length > 0) {
-        // L'utente HA PAGATO: mostriamo il quiz
-        mostraQuiz(); 
-    } else {
-        // L'utente NON HA PAGATO: mostriamo il tasto di pagamento
-        mostraPagamento();
-    }
-}
-
-// Chiamiamo il controllo appena l'app si apre
-checkAccess();
-async function pagaConStars() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    
-    // Chiamiamo il nostro "cervello" su Vercel
-    const response = await fetch('/api/create-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-    });
-    const data = await response.json();
-    
-    // Apriamo il pagamento nativo di Telegram
-    window.Telegram.WebApp.openInvoice(data.url);
-}
-
-// Aggiungi questo controllo all'inizio di script.js
-function checkAccess() {
-    // Verifica se l'app è aperta in Telegram (tramite l'oggetto Telegram.WebApp)
-    if (window.Telegram.WebApp.initData === "") {
-        // Se initData è vuoto, significa che non siamo in Telegram
-        document.body.innerHTML = `
-            <div style="text-align:center; padding-top: 50px; font-family: sans-serif;">
-                <h1>Accesso Negato 🚫</h1>
-                <p>Questa applicazione è accessibile solo tramite il bot Telegram ufficiale.</p>
-            </div>
-        `;
-        return false; // Blocca tutto
-    }
-    return true; // Accesso consentito
-}
-
-// Chiama il controllo prima di avviare il quiz
-if (checkAccess()) {
-    // Inserisci qui tutto il resto del tuo codice esistente
-    // (startSimulation, showQuestion, ecc...)
-    window.Telegram.WebApp.expand();
-    // ...
-}
+// 2. VARIABILI DEL QUIZ
+let selectedQuestions = [];
+let currentIndex = 0;
+let score = 0;
 const quizData = [
       {
         q: "Il diritto commerciale regola:",
@@ -5420,12 +5311,19 @@ const quizData = [
     
 ];
 
-let selectedQuestions = [];
-let currentIndex = 0;
-let score = 0;
+// 3. FUNZIONI DI INTERFACCIA (Gestione Pagina)
+function mostraQuiz() {
+    document.getElementById('quiz-container').style.display = 'block';
+    document.getElementById('payment-container').style.display = 'none';
+}
 
+function mostraPagamento() {
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('payment-container').style.display = 'block';
+}
+
+// 4. FUNZIONI LOGICA QUIZ
 function startSimulation() {
-    // Pesca 30 domande casuali
     selectedQuestions = [...quizData].sort(() => Math.random() - 0.5).slice(0, 30);
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('quiz-screen').style.display = 'block';
@@ -5436,11 +5334,9 @@ function showQuestion() {
     const q = selectedQuestions[currentIndex];
     document.getElementById('progress').innerText = `Domanda ${currentIndex + 1}/30`;
     document.getElementById('question').innerText = q.q;
-    
     const container = document.getElementById('options-container');
     container.innerHTML = '';
     document.getElementById('feedback-container').style.display = 'none';
-    
     q.options.forEach((opt, index) => {
         const btn = document.createElement('button');
         btn.innerText = opt.text;
@@ -5452,10 +5348,7 @@ function showQuestion() {
 function checkAnswer(index, btn) {
     const q = selectedQuestions[currentIndex];
     const isCorrect = q.options[index].correct;
-    
-    // Disabilita tasti
     document.querySelectorAll('#options-container button').forEach(b => b.disabled = true);
-    
     if (isCorrect) {
         score += 0.5;
         btn.classList.add('correct');
@@ -5464,7 +5357,6 @@ function checkAnswer(index, btn) {
         btn.classList.add('wrong');
         document.getElementById('result-text').innerText = "Sbagliato!";
     }
-    
     document.getElementById('info-box').innerText = q.info;
     document.getElementById('feedback-container').style.display = 'block';
 }
@@ -5484,4 +5376,48 @@ function showResults() {
     document.getElementById('final-score').innerText = `Il tuo punteggio finale è: ${score} / 15`;
 }
 
+// 5. FUNZIONI PAGAMENTO E ACCESSO
+async function pagaConStars() {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    const response = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+    });
+    const data = await response.json();
+    window.Telegram.WebApp.openInvoice(data.url);
+}
+
+async function checkAccess() {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    
+    // Verifica sicurezza base
+    if (!user) {
+        document.body.innerHTML = "<h1>Errore: Apri da Telegram</h1>";
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
+            headers: { 
+                'apikey': SUPABASE_KEY, 
+                'Authorization': `Bearer ${SUPABASE_KEY}` 
+            }
+        });
+        const data = await response.json();
+        
+        if (data.length > 0) {
+            mostraQuiz();
+        } else {
+            mostraPagamento();
+        }
+    } catch (e) {
+        console.error("Errore database:", e);
+        // Se c'è errore, mostriamo il pagamento per sicurezza
+        mostraPagamento();
+    }
+}
+
+// 6. AVVIO FINALE
 window.Telegram.WebApp.expand();
+checkAccess();
