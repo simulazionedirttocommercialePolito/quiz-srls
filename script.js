@@ -5425,32 +5425,28 @@ async function pagaConStars() {
 }
 
 async function checkAccess() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    
-    if (!user) {
-        document.body.innerHTML = "<h1>Errore: Apri da Telegram</h1>";
-        return;
-    }
-    
+    // Aggiungi un controller di timeout
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 8000); // Se dopo 8 secondi non risponde, molla la presa
+
     try {
-        // NOTA: Qui aggiungiamo il path corretto una sola volta
         const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
+            signal: controller.signal, // Collega il timeout
             headers: { 
                 'apikey': SUPABASE_KEY, 
                 'Authorization': `Bearer ${SUPABASE_KEY}` 
             }
         });
+        clearTimeout(id); // Se ha risposto, ferma il timer
         
         const data = await response.json();
-        
-        if (data.length > 0) {
-            mostraQuiz();
-        } else {
-            // Se l'utente non è pagante, mostra la schermata di pagamento
-            document.getElementById('payment-container').style.display = 'block';
-        }
+        // ... resto del codice ...
     } catch (error) {
-        console.error("Errore nel checkAccess:", error);
+        if (error.name === 'AbortError') {
+            console.log("Il server ha impiegato troppo tempo, riprova!");
+        } else {
+            console.error("Errore di rete:", error);
+        }
     }
 }
 // 6. AVVIO FINALE
