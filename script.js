@@ -2,12 +2,11 @@
 const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
 
-// IMPORTANTE: Questa riga crea il client. Senza questa, checkAccess() fallisce!
+// --- CORREZIONE CRITICA: Inizializza il client QUI, subito dopo le costanti ---
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 2. VARIABILI DEL QUIZ
 let selectedQuestions = [];
-
 let currentIndex = 0;
 let score = 0;
 const quizData = [
@@ -5374,36 +5373,19 @@ function nextQuestion() {
     }
 }
 
-// MODIFICATA: Aggiunto bottone per ricominciare
 function showResults() {
     document.getElementById('quiz-screen').style.display = 'none';
     document.getElementById('result-screen').style.display = 'block';
-    document.getElementById('final-score').innerHTML = `
-        <p>Il tuo punteggio finale è: ${score} / 15</p>
-        <button onclick="resettaQuiz()">Ricomincia Esercizio</button>
-    `;
-}
-
-// NUOVA: Funzione per resettare il quiz senza toccare il pagamento
-function resettaQuiz() {
-    score = 0;
-    currentIndex = 0;
-    document.getElementById('result-screen').style.display = 'none';
-    document.getElementById('quiz-screen').style.display = 'block';
-    startSimulation(); // Fa ripartire da capo
+    document.getElementById('final-score').innerText = `Il tuo punteggio finale è: ${score} / 15`;
 }
 
 // 5. FUNZIONI PAGAMENTO E ACCESSO
 async function pagaConStars() {
-    console.log("--- Inizio procedura PagaConStars ---");
-    
-    if (!window.Telegram.WebApp.initDataUnsafe?.user) {
+    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
         alert("Errore: Apri l'app tramite Telegram.");
         return;
     }
-
     window.Telegram.WebApp.MainButton.showProgress();
-
     try {
         const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
         const response = await fetch('/api/create-invoice', {
@@ -5411,44 +5393,58 @@ async function pagaConStars() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: userId })
         });
-
         if (!response.ok) throw new Error("Risposta server non valida");
-
         const data = await response.json();
         window.Telegram.WebApp.openInvoice(data.url, (status) => {
             if (status === 'paid') {
                 alert("Pagamento riuscito!");
-                checkAccess(); // Ricarica lo stato ora che hai pagato
+                checkAccess();
             }
         });
-
     } catch (err) {
-        alert("Errore durante il pagamento: " + err.message);
+        alert("Errore pagamento: " + err.message);
     } finally {
         window.Telegram.WebApp.MainButton.hideProgress();
     }
 }
 
 async function checkAccess() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    if (!user) return;
-    
-    const { data, error } = await supabase
-        .from('utenti_paganti')
-        .select('*')
-        .eq('telegram_id', user.id);
+    try {
+        const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+        if (!user) {
+            console.log("Non sei in Telegram, mostro test");
+            document.getElementById('payment-container').style.display = 'block';
+            return;
+        }
 
-    if (error) return;
+        const { data, error } = await supabase
+            .from('utenti_paganti')
+            .select('*')
+            .eq('telegram_id', user.id);
 
-    if (data && data.length > 0) {
-        document.getElementById('payment-container').style.display = 'none';
-        document.getElementById('quiz-container').style.display = 'block';
-    } else {
-        document.getElementById('payment-container').style.display = 'block';
-        document.getElementById('quiz-container').style.display = 'none';
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            mostraQuiz();
+        } else {
+            mostraPagamento();
+        }
+    } catch (e) {
+        console.error("Errore accesso:", e);
+        // In caso di errore, mostriamo il pagamento per sicurezza
+        mostraPagamento();
     }
 }
 
 // 6. AVVIO FINALE
-window.Telegram.WebApp.expand();
-checkAccess();
+window.addEventListener('load', () => {
+    try {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.expand();
+        }
+        checkAccess();
+    } catch (e) {
+        console.error("Errore critico di avvio", e);
+        document.getElementById('payment-container').style.display = 'block';
+    }
+});
