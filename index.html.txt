@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Giuridico</title>
+    <!-- Questo script collega la tua pagina a Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Benvenuto nel Quiz</h1>
+    <p>Il tuo ID Telegram è: <span id="user-id">Caricamento...</span></p>
+    <button onclick="alert('Qui metteremo i quiz!')">Inizia Quiz</button>
+
+    <script>
+        // Inizializza l'app di Telegram
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Espande l'app a tutto schermo
+        
+        // Legge l'ID dell'utente
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('user-id').innerText = tg.initDataUnsafe.user.id;
+        } else {
+            document.getElementById('user-id').innerText = "Non rilevato (apri da Telegram)";
+        }
+    </script>
+</body>
+</html>
