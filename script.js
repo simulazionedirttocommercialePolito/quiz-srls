@@ -5401,21 +5401,20 @@ async function pagaConStars() {
         }
 
         const data = await response.json();
-        console.log("4. Dati ricevuti:", data);
+        console.log("4. Dati ricevuti dal server:", data);
 
-        // Cambiamo .url in .result per leggere correttamente la risposta di Telegram
-        if (data.result) {
-            console.log("5. Apro l'invoice con URL:", data.result);
-            window.Telegram.WebApp.openInvoice(data.result);
+        // CORREZIONE QUI: Controlliamo .url perché il server invia .url
+        if (data.url) {
+            console.log("5. Apro l'invoice con URL:", data.url);
+            window.Telegram.WebApp.openInvoice(data.url);
         } else {
-            throw new Error("Il server non ha restituito un URL valido: " + JSON.stringify(data));
+            throw new Error("Il server non ha restituito un URL valido. Dati ricevuti: " + JSON.stringify(data));
         }
 
     } catch (error) {
         console.error("ERRORE CRITICO:", error);
-        alert("Errore: " + error.message); // Questo ti dice subito cosa non va
+        alert("Errore: " + error.message); 
     } finally {
-        // Questa parte viene eseguita SEMPRE, successo o errore
         window.Telegram.WebApp.MainButton.hideProgress();
         console.log("Procedura terminata.");
     }
