@@ -5403,11 +5403,12 @@ async function pagaConStars() {
         const data = await response.json();
         console.log("4. Dati ricevuti:", data);
 
-        if (data.url) {
-            console.log("5. Apro l'invoice...");
-            window.Telegram.WebApp.openInvoice(data.url);
+        // Cambiamo .url in .result per leggere correttamente la risposta di Telegram
+        if (data.result) {
+            console.log("5. Apro l'invoice con URL:", data.result);
+            window.Telegram.WebApp.openInvoice(data.result);
         } else {
-            throw new Error("Il server non ha restituito un URL valido.");
+            throw new Error("Il server non ha restituito un URL valido: " + JSON.stringify(data));
         }
 
     } catch (error) {
