@@ -1,11 +1,13 @@
 // 1. CONFIGURAZIONE
 const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
-// ASSICURATI DI AVERE IL CLIENT SUPABASE INIZIALIZZATO (se non lo hai fatto sopra, aggiungilo qui):
-// const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// IMPORTANTE: Questa riga crea il client. Senza questa, checkAccess() fallisce!
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 2. VARIABILI DEL QUIZ
 let selectedQuestions = [];
+
 let currentIndex = 0;
 let score = 0;
 const quizData = [
