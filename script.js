@@ -1,3 +1,18 @@
+async function pagaConStars() {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    
+    // Chiamiamo il nostro "cervello" su Vercel
+    const response = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+    });
+    const data = await response.json();
+    
+    // Apriamo il pagamento nativo di Telegram
+    window.Telegram.WebApp.openInvoice(data.url);
+}
+
 // Aggiungi questo controllo all'inizio di script.js
 function checkAccess() {
     // Verifica se l'app è aperta in Telegram (tramite l'oggetto Telegram.WebApp)
