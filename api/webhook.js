@@ -1,45 +1,40 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Inizializza Supabase una sola volta
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 export default async function handler(req, res) {
-    // 1. Controlla che sia un POST
-    if (req.method !== 'POST') {
-        return res.status(405).json({ message: 'Method not allowed' });
+    if (req.method !== 'POST') return res.status(405).end();
+
+    const update = req.body;
+    console.log("DEBUG WEBHOOK:", JSON.stringify(update, null, 2));
+
+    // 1. GESTIONE PRE-CHECKOUT (Fondamentale per le Stars)
+    if (update.pre_checkout_query) {
+        console.log("Ricevuta pre_checkout_query, autorizzo il pagamento...");
+        
+        // Rispondi a Telegram per autorizzare il pagamento
+        await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/answerPreCheckoutQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pre_checkout_query_id: update.pre_checkout_query.id,
+                ok: true
+            })
+        });
+        return res.status(200).json({ status: 'ok' });
     }
 
-    // 2. LOG DI DEBUG (Fondamentale!)
-    // Questo ti mostrerà esattamente cosa sta arrivando da Telegram nei log di Vercel
-    console.log("PAYLOAD RICEVUTO:", JSON.stringify(req.body, null, 2));
+    // 2. GESTIONE PAGAMENTO RIUSCITO
+    if (update.message && update.message.successful_payment) {
+        const userId = update.message.from.id;
+        console.log(`Pagamento confermato per: ${userId}`);
 
-    const { message } = req.body;
+        await supabase
+            .from('utenti_paganti')
+            .upsert({ telegram_id: userId }, { onConflict: 'telegram_id' });
 
-    // 3. Verifichiamo se c'è un pagamento riuscito
-    if (message && message.successful_payment) {
-        const userId = message.from.id;
-
-        try {
-            console.log(`Tentativo inserimento DB per utente: ${userId}`);
-            
-            const { error } = await supabase
-                .from('utenti_paganti')
-                .upsert(
-                    { telegram_id: userId },
-                    { onConflict: 'telegram_id' }
-                );
-
-            if (error) throw error;
-
-            console.log(`Pagamento confermato e salvato per: ${userId}`);
-            return res.status(200).json({ status: 'success' });
-
-        } catch (err) {
-            console.error('Errore durante l\'aggiornamento del DB:', err);
-            return res.status(500).json({ error: 'Internal Server Error' });
-        }
+        return res.status(200).json({ status: 'success' });
     }
 
-    // Risposta standard per altri messaggi
     return res.status(200).json({ status: 'ignored' });
 }
