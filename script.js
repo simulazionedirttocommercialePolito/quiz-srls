@@ -1,5 +1,5 @@
 // 1. CONFIGURAZIONE (Inserisci qui le tue chiavi vere!)
-const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
 
 // 2. VARIABILI DEL QUIZ
@@ -5427,33 +5427,32 @@ async function pagaConStars() {
 async function checkAccess() {
     const user = window.Telegram.WebApp.initDataUnsafe.user;
     
-    // Verifica sicurezza base
     if (!user) {
         document.body.innerHTML = "<h1>Errore: Apri da Telegram</h1>";
         return;
     }
     
     try {
+        // NOTA: Qui aggiungiamo il path corretto una sola volta
         const response = await fetch(`${SUPABASE_URL}/rest/v1/utenti_paganti?telegram_id=eq.${user.id}`, {
             headers: { 
                 'apikey': SUPABASE_KEY, 
                 'Authorization': `Bearer ${SUPABASE_KEY}` 
             }
         });
+        
         const data = await response.json();
         
         if (data.length > 0) {
             mostraQuiz();
         } else {
-            mostraPagamento();
+            // Se l'utente non è pagante, mostra la schermata di pagamento
+            document.getElementById('payment-container').style.display = 'block';
         }
-    } catch (e) {
-        console.error("Errore database:", e);
-        // Se c'è errore, mostriamo il pagamento per sicurezza
-        mostraPagamento();
+    } catch (error) {
+        console.error("Errore nel checkAccess:", error);
     }
 }
-
 // 6. AVVIO FINALE
 window.Telegram.WebApp.expand();
 checkAccess();
