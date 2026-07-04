@@ -5330,48 +5330,28 @@ async function checkAccess() {
     const user = window.Telegram.WebApp.initDataUnsafe.user;
     
     if (!user) {
-        mostraPagamento();
+        document.getElementById('payment-container').style.display = 'block';
         return;
     }
 
-    // Usiamo 'client.from' (il nome corretto della variabile che abbiamo creato sopra)
-    const { data, error } = await client
-        .from('utenti_paganti')
-        .select('*')
-        .eq('telegram_id', user.id);
+    try {
+        const { data, error } = await supabaseClient
+            .from('utenti_paganti')
+            .select('*')
+            .eq('telegram_id', user.id);
 
-    if (error) {
-        console.error("Errore DB:", error);
-        return;
-    }
+        if (error) throw error;
 
-    if (data && data.length > 0) {
-        mostraQuiz();
-    } else {
-        mostraPagamento();
-    }
-}
-
-async function pagaConStars() {
-    window.Telegram.WebApp.MainButton.showProgress();
-    const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-
-    const response = await fetch('/api/create-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId })
-    });
-
-    const data = await response.json();
-    
-    window.Telegram.WebApp.openInvoice(data.url, (status) => {
-        if (status === 'paid') {
-            checkAccess();
+        if (data && data.length > 0) {
+            document.getElementById('quiz-container').style.display = 'block';
+        } else {
+            document.getElementById('payment-container').style.display = 'block';
         }
-    });
-    window.Telegram.WebApp.MainButton.hideProgress();
+    } catch (err) {
+        console.error("Errore DB:", err);
+        document.getElementById('payment-container').style.display = 'block';
+    }
 }
 
-// 4. AVVIO
 window.Telegram.WebApp.expand();
 checkAccess();
