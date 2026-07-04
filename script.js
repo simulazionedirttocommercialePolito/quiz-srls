@@ -1,7 +1,4 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
+console.log("Il file script.js è stato caricato correttamente!");
 const database = [
     {
         q: "Il diritto commerciale regola:",
