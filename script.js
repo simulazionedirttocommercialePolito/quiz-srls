@@ -5315,17 +5315,27 @@ const quizData = [
     
 ];
 
+// 3. FUNZIONI LOGICA
+function mostraQuiz() {
+    document.getElementById('payment-container').style.display = 'none';
+    document.getElementById('quiz-container').style.display = 'block';
+}
+
+function mostraPagamento() {
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('payment-container').style.display = 'block';
+}
+
 async function checkAccess() {
     const user = window.Telegram.WebApp.initDataUnsafe.user;
-
-    // Se non sei su Telegram, per sicurezza mostriamo il pagamento
+    
     if (!user) {
-        document.getElementById('payment-container').style.display = 'block';
+        mostraPagamento();
         return;
     }
 
-    // Usiamo 'db' (il client), non 'supabase'
-    const { data, error } = await db
+    // Usiamo 'client.from' (il nome corretto della variabile che abbiamo creato sopra)
+    const { data, error } = await client
         .from('utenti_paganti')
         .select('*')
         .eq('telegram_id', user.id);
@@ -5336,15 +5346,12 @@ async function checkAccess() {
     }
 
     if (data && data.length > 0) {
-        document.getElementById('payment-container').style.display = 'none';
-        document.getElementById('quiz-container').style.display = 'block';
+        mostraQuiz();
     } else {
-        document.getElementById('payment-container').style.display = 'block';
-        document.getElementById('quiz-container').style.display = 'none';
+        mostraPagamento();
     }
 }
 
-// FUNZIONE PAGAMENTO
 async function pagaConStars() {
     window.Telegram.WebApp.MainButton.showProgress();
     const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
@@ -5365,6 +5372,6 @@ async function pagaConStars() {
     window.Telegram.WebApp.MainButton.hideProgress();
 }
 
-// AVVIO
+// 4. AVVIO
 window.Telegram.WebApp.expand();
 checkAccess();
