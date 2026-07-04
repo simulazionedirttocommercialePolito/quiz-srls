@@ -47,7 +47,7 @@
             </div>
         </div>
 
-        <button id="pay-btn" class="action-btn" style="background-color: var(--orange); display: none;" onclick="pay()">Sblocca Esame Completo (1 Star)</button>
+        <button id="pay-btn" class="action-btn" style="background-color: var(--orange); display: none;" onclick="pay()">Sblocca Esame Completo (150 Star)</button>
 
         <div class="question-box" id="question-text" style="margin-top: 20px;">Caricamento...</div>
         <div class="options-list" id="options-container"></div>
@@ -128,7 +128,7 @@ async function pay() {
                     location.reload();
                 } else {
                     btn.disabled = false;
-                    btn.innerText = 'Sblocca Esame Completo (1 Star)';
+                    btn.innerText = 'Sblocca Esame Completo (150 Star)';
                 }
             });
         } else {
@@ -137,7 +137,7 @@ async function pay() {
     } catch (e) {
         alert('Errore durante il pagamento: ' + e.message);
         btn.disabled = false;
-        btn.innerText = 'Sblocca Esame Completo (1 Star)';
+        btn.innerText = 'Sblocca Esame Completo (150 Star)';
     }
 }
 
