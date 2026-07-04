@@ -1,11 +1,17 @@
-// CONFIGURAZIONE
+// --- ALL'AVVIO ---
+window.addEventListener('load', () => {
+    // Nascondi tutto inizialmente
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('payment-container').style.display = 'none';
+    
+    // Chiama il controllo SOLO qui
+    checkAccess();
+});
+// 1. CONFIGURAZIONE (Inserisci qui le tue chiavi vere!)
 const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
 
-// Inizializzazione sicura
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// VARIABILI
+// 2. VARIABILI DEL QUIZ
 let selectedQuestions = [];
 let currentIndex = 0;
 let score = 0;
@@ -5314,13 +5320,7 @@ const quizData = [
     
 ];
 
-// --- FIX: Aggiunta funzione mancante che causava il crash ---
-function mostraDomanda(index) {
-    currentIndex = index;
-    showQuestion();
-}
-
-// FUNZIONI DI PAGINA
+// 3. FUNZIONI DI INTERFACCIA (Gestione Pagina)
 function mostraQuiz() {
     document.getElementById('quiz-container').style.display = 'block';
     document.getElementById('payment-container').style.display = 'none';
@@ -5331,7 +5331,7 @@ function mostraPagamento() {
     document.getElementById('payment-container').style.display = 'block';
 }
 
-// LOGICA QUIZ
+// 4. FUNZIONI LOGICA QUIZ
 function startSimulation() {
     selectedQuestions = [...quizData].sort(() => Math.random() - 0.5).slice(0, 30);
     document.getElementById('start-screen').style.display = 'none';
@@ -5385,46 +5385,91 @@ function showResults() {
     document.getElementById('final-score').innerText = `Il tuo punteggio finale è: ${score} / 15`;
 }
 
-// PAGAMENTO E ACCESSO
+// 5. FUNZIONI PAGAMENTO E ACCESSO
 async function pagaConStars() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    if (!user) return alert("Errore: Apri da Telegram");
-
-    window.Telegram.WebApp.MainButton.showProgress();
-    const response = await fetch('/api/create-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-    });
-    const data = await response.json();
+    console.log("--- Inizio procedura PagaConStars ---");
     
-    window.Telegram.WebApp.openInvoice(data.url, (status) => {
-        if (status === 'paid') {
-            checkAccess();
-        }
-    });
-    window.Telegram.WebApp.MainButton.hideProgress();
-}
-
-async function checkAccess() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    if (!user) {
-        mostraPagamento();
+    // 1. Controllo base: siamo dentro Telegram?
+    if (!window.Telegram.WebApp.initDataUnsafe?.user) {
+        console.error("ERRORE: initDataUnsafe non trovato. Stai aprendo il bot da Telegram?");
+        alert("Errore: Apri l'app tramite Telegram.");
         return;
     }
 
-    const { data, error } = await supabase
-        .from('utenti_paganti')
-        .select('*')
-        .eq('telegram_id', user.id);
+    window.Telegram.WebApp.MainButton.showProgress();
 
-    if (error || !data || data.length === 0) {
-        mostraPagamento();
-    } else {
-        mostraQuiz();
+    try {
+        console.log("2. Invio richiesta al server...");
+        const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+        
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+        });
+
+        if (!response.ok) throw new Error("Risposta server non valida: " + response.status);
+
+        const data = await response.json();
+        console.log("3. Risposta ricevuta:", data);
+
+        if (!data.url) throw new Error("URL mancante nella risposta del server");
+
+        // 4. Apertura Invoice
+        console.log("4. Tentativo apertura Invoice:", data.url);
+        window.Telegram.WebApp.openInvoice(data.url, (status) => {
+            console.log("5. Esito pagamento da Telegram:", status);
+            if (status === 'paid') {
+                alert("Pagamento riuscito!");
+                mostraQuiz();
+            }
+        });
+
+    } catch (err) {
+        console.error("--- ERRORE CRITICO NELLO SCRIPT ---", err);
+        alert("Errore durante il pagamento: " + err.message);
+    } finally {
+        window.Telegram.WebApp.MainButton.hideProgress();
     }
 }
 
-// AVVIO
+async function checkAccess() {
+    // 1. Prendi l'ID utente da Telegram
+    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+    
+    if (!userId) {
+        console.error("Non posso controllare l'accesso senza ID Telegram");
+        return;
+    }
+
+    // 2. Controlla nel DB
+    const { data, error } = await supabase
+        .from('utenti_paganti')
+        .select('*')
+        .eq('telegram_id', userId);
+
+    if (error) {
+        console.error("Errore nel controllo DB:", error);
+        return;
+    }
+
+    // 3. Logica: Se ha pagato (data.length > 0), sblocca
+    const isPaid = data && data.length > 0;
+
+    if (isPaid) {
+        console.log("Utente pagante riconosciuto. Accesso libero.");
+        document.getElementById('payment-container').style.display = 'none';
+        document.getElementById('quiz-container').style.display = 'block';
+        // Se è la prima volta, mostra la prima domanda
+        if (typeof currentIndex === 'undefined' || currentIndex === 0) {
+            mostraDomanda(0);
+        }
+    } else {
+        console.log("Utente non pagante. Mostro pagamento.");
+        document.getElementById('payment-container').style.display = 'block';
+        document.getElementById('quiz-container').style.display = 'none';
+    }
+}
+// 6. AVVIO FINALE
 window.Telegram.WebApp.expand();
 checkAccess();
