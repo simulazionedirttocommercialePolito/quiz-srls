@@ -1,136 +1,38 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulatore d'Esame Completo - 30 Domande</title>
+    <title>Simulatore d'Esame Completo</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --primary: #0056b3;
-            --primary-hover: #004085;
-            --success: #28a745;
-            --success-bg: #d4edda;
-            --danger: #dc3545;
-            --danger-bg: #f8d7da;
-            --neutral-bg: #f8f9fa;
-            --text-main: #333;
+            --primary: #0056b3; --primary-hover: #004085;
+            --success: #28a745; --success-bg: #d4edda;
+            --danger: #dc3545; --danger-bg: #f8d7da;
+            --neutral-bg: #f8f9fa; --text-main: #333;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #e9ecef;
-            color: var(--text-main);
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            justify-content: center;
-        }
-        .quiz-card {
-            width: 100%;
-            max-width: 650px;
-            background: white;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            margin-top: 10px;
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #dee2e6;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        h1 {
-            font-size: 24px;
-            color: var(--primary);
-            margin: 0 0 10px 0;
-        }
-        .stats-bar {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            color: #6c757d;
-            font-weight: 600;
-        }
-        .question-box {
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.4;
-            margin-bottom: 20px;
-        }
-        .options-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .option-item {
-            background: var(--neutral-bg);
-            border: 2px solid #ced4da;
-            padding: 14px 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .option-item:hover {
-            border-color: var(--primary);
-            background-color: #f1f7fe;
-        }
-        .option-item.correct {
-            background-color: var(--success-bg) !important;
-            border-color: var(--success) !important;
-            color: #155724;
-            font-weight: bold;
-        }
-        .option-item.wrong {
-            background-color: var(--danger-bg) !important;
-            border-color: var(--danger) !important;
-            color: #721c24;
-        }
-        .explanation {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e2f0fe;
-            border-left: 5px solid var(--primary);
-            border-radius: 6px;
-            font-size: 15px;
-            line-height: 1.5;
-            display: none;
-        }
-        .action-btn {
-            display: block;
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 25px;
-            transition: background 0.2s;
-        }
-        .action-btn:hover {
-            background: var(--primary-hover);
-        }
-        .results-screen {
-            text-align: center;
-            padding: 20px 0;
-        }
-        .score-badge {
-            font-size: 48px;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 20px 0;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #e9ecef; color: var(--text-main); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .quiz-card { width: 100%; max-width: 650px; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-top: 10px; }
+        .header { text-align: center; border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { font-size: 24px; color: var(--primary); margin: 0 0 10px 0; }
+        .stats-bar { display: flex; justify-content: space-between; font-size: 14px; color: #6c757d; font-weight: 600; }
+        .question-box { font-size: 18px; font-weight: 700; line-height: 1.4; margin-bottom: 20px; }
+        .options-list { display: flex; flex-direction: column; gap: 12px; }
+        .option-item { background: var(--neutral-bg); border: 2px solid #ced4da; padding: 14px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+        .option-item:hover { border-color: var(--primary); background-color: #f1f7fe; }
+        .option-item.correct { background-color: var(--success-bg) !important; border-color: var(--success) !important; color: #155724; }
+        .option-item.wrong { background-color: var(--danger-bg) !important; border-color: var(--danger) !important; color: #721c24; }
+        .explanation { margin-top: 20px; padding: 15px; background-color: #e2f0fe; border-left: 5px solid var(--primary); border-radius: 6px; display: none; }
+        .action-btn { display: block; width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 25px; }
+        .results-screen { text-align: center; padding: 20px 0; }
+        .score-badge { font-size: 48px; font-weight: 800; color: var(--primary); margin: 20px 0; }
     </style>
 </head>
 <body>
 
-<div class="quiz-card">
-    <div id="quiz-game">
+<div class="quiz-card" id="main-container">
+    <div id="quiz-game" style="display: none;">
         <div class="header">
             <h1>Simulazione Diritto Commerciale</h1>
             <div class="stats-bar">
@@ -138,22 +40,23 @@
                 <span id="score-text">Punti: 0.0</span>
             </div>
         </div>
-        <div class="question-box" id="question-text">Caricamento della domanda...</div>
+        <div class="question-box" id="question-text">Caricamento...</div>
         <div class="options-list" id="options-container"></div>
-        <div class="info" id="explanation-box"></div>
+        <div class="explanation" id="explanation-box"></div>
         <button class="action-btn" id="next-btn" style="display: none;" onclick="handleNext()">Prossima Domanda</button>
     </div>
 
     <div id="quiz-results" style="display: none;" class="results-screen">
         <h1>Esame Completato! 🏖️</h1>
-        <p>Hai risposto alle 30 domande d'esame estratte casualmente.</p>
         <div class="score-badge" id="final-score">0.0 / 15.0</div>
-        <p id="result-comment"></p>
-        <button class="action-btn" onclick="restartQuiz()">Inizia Nuova Simulazione Casuale</button>
+        <button class="action-btn" onclick="restartQuiz()">Inizia Nuova Simulazione</button>
     </div>
 </div>
 
 <script>
+    // --- 1. CONFIGURAZIONE (INSERISCI QUI I TUOI DATI SUPABASE) ---
+    const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co/rest/v1/"; 
+    const SUPABASE_ANON_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
 const fullDatabase = [
     {
         q: "Il diritto commerciale regola:",
@@ -5457,117 +5360,106 @@ le corrente, di regola, tra peso sociale e ammontare del conferimento:",
     "info": "Le operazioni straordinarie di fusione e scissione sono perfettamente compatibili anche con le S.r.l.s. e le S.r.l. a capitale ridotto."
   }
   
-  
-  
-  
+];
 
-    
-    
-    ];
+// Variabili di gioco
+    let activeQuestions = [], currentIndex = 0, currentScore = 0.0, isAnswered = false;
 
-let activeQuestions = [];
-let currentIndex = 0;
-let currentScore = 0.0;
-let isAnswered = false;
+    // --- 3. CONTROLLO ACCESSO ---
+    async function checkAccess() {
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const userId = tg.initDataUnsafe.user?.id;
 
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
+        if (!userId) {
+            document.getElementById("main-container").innerHTML = "<h1>Apri l'app da Telegram</h1>";
+            return;
+        }
 
-function initQuiz() {
-    let shuffledDb = shuffle([...fullDatabase]);
-    activeQuestions = shuffledDb.slice(0, Math.min(30, shuffledDb.length));
-    currentIndex = 0;
-    currentScore = 0.0;
-    loadQuestion();
-}
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${userId}`, {
+                headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+            });
+            const data = await response.json();
 
-function loadQuestion() {
-    isAnswered = false;
-    const currentQ = activeQuestions[currentIndex];
-    
-    document.getElementById("progress-text").innerText = `Domanda ${currentIndex + 1} di ${activeQuestions.length}`;
-    document.getElementById("score-text").innerText = `Punti: ${currentScore.toFixed(2)}`;
-    document.getElementById("question-text").innerText = currentQ.q;
-    
-    const container = document.getElementById("options-container");
-    container.innerHTML = "";
-    document.getElementById("explanation-box").style.display = "none";
-    document.getElementById("next-btn").style.display = "none";
-
-    currentQ.options.forEach((opt) => {
-        const div = document.createElement("div");
-        div.className = "option-item";
-        div.innerText = opt.text;
-        div.onclick = () => selectOption(div, opt);
-        container.appendChild(div);
-    });
-}
-
-function selectOption(element, option) {
-    if (isAnswered) return;
-    isAnswered = true;
-
-    const items = document.querySelectorAll(".option-item");
-    
-    if (option.correct) {
-        element.classList.add("correct");
-        currentScore += 0.50;
-    } else {
-        element.classList.add("wrong");
-        const currentQ = activeQuestions[currentIndex];
-        const correctIdx = currentQ.options.findIndex(o => o.correct);
-        items[correctIdx].classList.add("correct");
+            if (data.length > 0 && data[0].is_paid === true) {
+                document.getElementById("quiz-game").style.display = "block";
+                initQuiz();
+            } else {
+                showPaywall();
+            }
+        } catch (e) {
+            document.body.innerHTML = "<h1>Errore di connessione al database</h1>";
+        }
     }
 
-    document.getElementById("score-text").innerText = `Punti: ${currentScore.toFixed(2)}`;
-    
-    const expBox = document.getElementById("explanation-box");
-    expBox.innerHTML = `<strong>Spiegazione approfondita:</strong> ${option.info}`;
-    expBox.style.display = "block";
-    
-    document.getElementById("next-btn").style.display = "block";
-}
+    function showPaywall() {
+        document.getElementById("main-container").innerHTML = `
+            <div class="results-screen">
+                <h1>Accesso Richiesto 🔒</h1>
+                <p>Per sbloccare il simulatore, procedi con l'acquisto.</p>
+                <button class="action-btn" onclick="requestPayment()">Sblocca Quiz (100 Stars)</button>
+            </div>
+        `;
+    }
 
-function handleNext() {
-    currentIndex++;
-    if (currentIndex < activeQuestions.length) {
+    function requestPayment() {
+        window.Telegram.WebApp.sendData(JSON.stringify({ action: "PAY_REQUEST" }));
+    }
+
+    // --- 4. LOGICA GIOCO ---
+    function initQuiz() {
+        activeQuestions = [...fullDatabase].sort(() => Math.random() - 0.5).slice(0, 30);
+        currentIndex = 0; currentScore = 0.0;
         loadQuestion();
-    } else {
-        showResults();
     }
-}
 
-function showResults() {
-    document.getElementById("quiz-game").style.display = "none";
-    document.getElementById("quiz-results").style.display = "block";
-    
-    const finalBadge = document.getElementById("final-score");
-    const maxScore = (activeQuestions.length * 0.5).toFixed(1);
-    finalBadge.innerText = `${currentScore.toFixed(2)} / ${maxScore}`;
-    
-    const comment = document.getElementById("result-comment");
-    if (currentScore >= 9.0) {
-        comment.innerText = "Complimenti! Esame superato con successo.";
-    } else {
-        comment.innerText = "Punteggio insufficiente. Fai un altro giro di simulazione per fissare i concetti!";
+    function loadQuestion() {
+        isAnswered = false;
+        const q = activeQuestions[currentIndex];
+        document.getElementById("progress-text").innerText = `Domanda ${currentIndex + 1} di 30`;
+        document.getElementById("question-text").innerText = q.q;
+        const container = document.getElementById("options-container");
+        container.innerHTML = "";
+        document.getElementById("explanation-box").style.display = "none";
+        document.getElementById("next-btn").style.display = "none";
+
+        q.options.forEach(opt => {
+            const div = document.createElement("div");
+            div.className = "option-item";
+            div.innerText = opt.text;
+            div.onclick = () => selectOption(div, opt);
+            container.appendChild(div);
+        });
     }
-}
 
-function restartQuiz() {
-    document.getElementById("quiz-results").style.display = "none";
-    document.getElementById("quiz-game").style.display = "block";
-    initQuiz();
-}
+    function selectOption(el, opt) {
+        if (isAnswered) return;
+        isAnswered = true;
+        if (opt.correct) { el.classList.add("correct"); currentScore += 0.5; } 
+        else { el.classList.add("wrong"); }
+        document.getElementById("score-text").innerText = `Punti: ${currentScore.toFixed(1)}`;
+        const exp = document.getElementById("explanation-box");
+        exp.innerHTML = `<strong>Spiegazione:</strong> ${opt.info}`;
+        exp.style.display = "block";
+        document.getElementById("next-btn").style.display = "block";
+    }
 
-window.onload = initQuiz;
+    function handleNext() {
+        currentIndex++;
+        if (currentIndex < activeQuestions.length) loadQuestion();
+        else showResults();
+    }
+
+    function showResults() {
+        document.getElementById("quiz-game").style.display = "none";
+        document.getElementById("quiz-results").style.display = "block";
+        document.getElementById("final-score").innerText = `${currentScore.toFixed(1)} / 15.0`;
+    }
+
+    function restartQuiz() { location.reload(); }
+
+    window.onload = checkAccess;
 </script>
-
 </body>
 </html>
-PD_TRY_AIUTO.html
-Visualizzazione di PD_TRY_AIUTO.html.
