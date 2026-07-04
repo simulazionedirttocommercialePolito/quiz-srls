@@ -5315,139 +5315,59 @@ const quizData = [
     
 ];
 
-// 3. FUNZIONI DI INTERFACCIA
-function mostraQuiz() {
-    document.getElementById('payment-container').style.display = 'none';
-    document.getElementById('quiz-container').style.display = 'block';
-}
-
-function mostraPagamento() {
-    document.getElementById('quiz-container').style.display = 'none';
-    document.getElementById('payment-container').style.display = 'block';
-}
-
-// 4. LOGICA QUIZ
-function startSimulation() {
-    selectedQuestions = [...quizData].sort(() => Math.random() - 0.5).slice(0, 30);
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('quiz-screen').style.display = 'block';
-    showQuestion();
-}
-
-function showQuestion() {
-    const q = selectedQuestions[currentIndex];
-    document.getElementById('progress').innerText = `Domanda ${currentIndex + 1}/30`;
-    document.getElementById('question').innerText = q.q;
-    const container = document.getElementById('options-container');
-    container.innerHTML = '';
-    document.getElementById('feedback-container').style.display = 'none';
-    q.options.forEach((opt, index) => {
-        const btn = document.createElement('button');
-        btn.innerText = opt.text;
-        btn.onclick = () => checkAnswer(index, btn);
-        container.appendChild(btn);
-    });
-}
-
-function checkAnswer(index, btn) {
-    const q = selectedQuestions[currentIndex];
-    const isCorrect = q.options[index].correct;
-    document.querySelectorAll('#options-container button').forEach(b => b.disabled = true);
-    if (isCorrect) {
-        score += 0.5;
-        btn.classList.add('correct');
-        document.getElementById('result-text').innerText = "Corretto! +0.5 punti";
-    } else {
-        btn.classList.add('wrong');
-        document.getElementById('result-text').innerText = "Sbagliato!";
-    }
-    document.getElementById('info-box').innerText = q.info;
-    document.getElementById('feedback-container').style.display = 'block';
-}
-
-function nextQuestion() {
-    currentIndex++;
-    if (currentIndex < selectedQuestions.length) {
-        showQuestion();
-    } else {
-        showResults();
-    }
-}
-
-function showResults() {
-    document.getElementById('quiz-screen').style.display = 'none';
-    document.getElementById('result-screen').style.display = 'block';
-    document.getElementById('final-score').innerText = `Il tuo punteggio finale è: ${score} / 15`;
-}
-
-function resettaQuiz() {
-    score = 0;
-    currentIndex = 0;
-    document.getElementById('result-screen').style.display = 'none';
-    document.getElementById('quiz-screen').style.display = 'block';
-    startSimulation();
-}
-
-// 5. PAGAMENTO E ACCESSO
-async function pagaConStars() {
-    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
-        alert("Errore: Apri l'app tramite Telegram.");
+// 3. LOGICA DI CONTROLLO (La parte che funzionava)
+async function checkAccess() {
+    // Prendiamo l'ID da Telegram
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    
+    // Se non sei su Telegram, per sicurezza mostriamo il pagamento
+    if (!user) {
+        document.getElementById('payment-container').style.display = 'block';
         return;
     }
+
+    // Interroghiamo il database
+    const { data, error } = await db
+        .from('utenti_paganti')
+        .select('*')
+        .eq('telegram_id', user.id);
+
+    if (error) {
+        console.error("Errore DB:", error);
+        return;
+    }
+
+    // Se troviamo l'utente, sblocchiamo
+    if (data && data.length > 0) {
+        document.getElementById('payment-container').style.display = 'none';
+        document.getElementById('quiz-container').style.display = 'block';
+    } else {
+        document.getElementById('payment-container').style.display = 'block';
+        document.getElementById('quiz-container').style.display = 'none';
+    }
+}
+
+// 4. PAGAMENTO
+async function pagaConStars() {
     window.Telegram.WebApp.MainButton.showProgress();
-    try {
-        const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-        const response = await fetch('/api/create-invoice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: userId })
-        });
-        const data = await response.json();
-        window.Telegram.WebApp.openInvoice(data.url, (status) => {
-            if (status === 'paid') {
-                alert("Pagamento riuscito!");
-                checkAccess();
-            }
-        });
-    } catch (err) {
-        alert("Errore pagamento: " + err.message);
-    } finally {
-        window.Telegram.WebApp.MainButton.hideProgress();
-    }
+    const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+
+    const response = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+    });
+
+    const data = await response.json();
+    
+    window.Telegram.WebApp.openInvoice(data.url, (status) => {
+        if (status === 'paid') {
+            checkAccess(); // Ricarica lo stato
+        }
+    });
+    window.Telegram.WebApp.MainButton.hideProgress();
 }
 
-async function checkAccess() {
-    try {
-        const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        if (!user) {
-            console.log("Non sei in Telegram, mostro pagina di pagamento");
-            mostraPagamento();
-            return;
-        }
-
-        // USO DEL CLIENT CORRETTO: supabaseClient
-        const { data, error } = await supabaseClient
-            .from('utenti_paganti')
-            .select('*')
-            .eq('telegram_id', user.id);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            mostraQuiz();
-        } else {
-            mostraPagamento();
-        }
-    } catch (e) {
-        console.error("Errore nel DB:", e);
-        mostraPagamento();
-    }
-}
-
-// 6. AVVIO
-window.addEventListener('load', () => {
-    if (window.Telegram && window.Telegram.WebApp) {
-        window.Telegram.WebApp.expand();
-    }
-    checkAccess();
-});
+// 5. AVVIO
+window.Telegram.WebApp.expand();
+checkAccess();
