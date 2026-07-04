@@ -1,4 +1,4 @@
-console.log("Il file script.js è stato caricato correttamente!");
+
 const database = [
     {
         q: "Il diritto commerciale regola:",
@@ -5305,33 +5305,36 @@ le corrente, di regola, tra peso sociale e ammontare del conferimento:",
 ];
 
 let currentIdx = 0;
-let score = 0;
+
+// Sincronizzazione: qui puntiamo agli ID del file HTML
+const qElement = document.getElementById('testo-domanda');
+const optContainer = document.getElementById('contenitore-opzioni');
+const nextBtn = document.getElementById('bottone-prossima');
 
 function render() {
     const q = database[currentIdx];
-    document.getElementById('q-text').innerText = q.q;
-    const container = document.getElementById('options');
-    container.innerHTML = '';
-    document.getElementById('next').style.display = 'none';
-
-    q.options.forEach(opt => {
+    
+    // Aggiorniamo il testo
+    qElement.innerText = q.q;
+    
+    // Svuotiamo le opzioni precedenti
+    optContainer.innerHTML = '';
+    
+    // Creiamo i bottoni
+    q.options.forEach(text => {
         const btn = document.createElement('button');
-        btn.className = 'option';
-        btn.innerText = opt.text;
-        btn.onclick = () => {
-            document.querySelectorAll('.option').forEach(b => b.disabled = true);
-            btn.classList.add(opt.correct ? 'correct' : 'wrong');
-            if(opt.correct) score++;
-            document.getElementById('next').style.display = 'block';
-        };
-        container.appendChild(btn);
+        btn.innerText = text;
+        btn.onclick = () => { nextBtn.style.display = 'block'; };
+        optContainer.appendChild(btn);
     });
 }
 
-document.getElementById('next').onclick = () => {
+// Logica del bottone
+nextBtn.onclick = () => {
     currentIdx++;
     if(currentIdx < database.length) render();
-    else alert("Quiz finito! Punteggio: " + score);
+    else alert("Fine!");
 };
 
+// Avvio
 render();
