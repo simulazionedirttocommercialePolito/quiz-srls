@@ -1,40 +1,24 @@
-import { createClient } from '@supabase/supabase-js';
+// api/webhook.js
+const { Telegraf } = require('telegraf');
+const { createClient } = require('@supabase/supabase-js');
 
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).end();
-
-    const update = req.body;
-    console.log("DEBUG WEBHOOK:", JSON.stringify(update, null, 2));
-
-    // 1. GESTIONE PRE-CHECKOUT (Fondamentale per le Stars)
-    if (update.pre_checkout_query) {
-        console.log("Ricevuta pre_checkout_query, autorizzo il pagamento...");
+module.exports = async (req, res) => {
+    // 1. Gestione del pagamento (Webhook di Telegram)
+    if (req.body.message && req.body.message.successful_payment) {
+        const userId = req.body.message.from.id;
         
-        // Rispondi a Telegram per autorizzare il pagamento
-        await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/answerPreCheckoutQuery`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                pre_checkout_query_id: update.pre_checkout_query.id,
-                ok: true
-            })
-        });
-        return res.status(200).json({ status: 'ok' });
-    }
-
-    // 2. GESTIONE PAGAMENTO RIUSCITO
-    if (update.message && update.message.successful_payment) {
-        const userId = update.message.from.id;
-        console.log(`Pagamento confermato per: ${userId}`);
-
+        // Aggiorna Supabase
         await supabase
-            .from('utenti_paganti')
-            .upsert({ telegram_id: userId }, { onConflict: 'telegram_id' });
-
-        return res.status(200).json({ status: 'success' });
+            .from('users')
+            .upsert({ telegram_id: userId, is_paid: true });
+            
+        return res.status(200).send('OK');
     }
-
-    return res.status(200).json({ status: 'ignored' });
-}
+    
+    // 2. Risposta base per bot
+    await bot.handleUpdate(req.body);
+    return res.status(200).send('Bot Running');
+};

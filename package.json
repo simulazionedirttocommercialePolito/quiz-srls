@@ -1,8 +1,8 @@
 {
-  "name": "mio-progetto-quiz",
+  "name": "quiz-bot",
   "version": "1.0.0",
-  "main": "index.js",
   "dependencies": {
-    "@supabase/supabase-js": "^2.48.0"
+    "telegraf": "^4.15.0",
+    "@supabase/supabase-js": "^2.39.0"
   }
 }
