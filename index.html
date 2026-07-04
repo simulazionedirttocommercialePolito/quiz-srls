@@ -72,6 +72,24 @@ let currentIndex = 0;
 let currentScore = 0.0;
 let isAnswered = false;
 
+function isInsideTelegram() {
+    const hasTelegramData =
+        window.Telegram &&
+        window.Telegram.WebApp &&
+        window.Telegram.WebApp.initData &&
+        window.Telegram.WebApp.initData.length > 0;
+
+    const isTelegramNative =
+        window.TelegramWebviewProxy ||
+        window.TelegramGameProxy ||
+        window.TelegramWebviewProxyProto;
+
+    const isTelegramWeb =
+        window.self !== window.top;
+
+    return hasTelegramData && (isTelegramNative || isTelegramWeb);
+}
+
 async function checkAccess() {
     const initData = window.Telegram.WebApp.initData;
     if (!initData) return 'free';
@@ -215,7 +233,7 @@ function showResults() {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+    if (isInsideTelegram()) {
         window.Telegram.WebApp.ready();
 
         const status = await checkAccess();
@@ -227,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('question-text').innerText = "Effettua il pagamento per sbloccare l'esame completo.";
         }
     } else {
-        document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px;'>Accesso non consentito. Usa Telegram.</h1>";
+        document.body.innerHTML = "<h1 style='text-align:center; margin-top:50px;'>Accesso consentito solo da Telegram.</h1>";
     }
 });
 </script>
