@@ -2,13 +2,17 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Test Funzionamento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore Esame</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <h1>Il sistema funziona!</h1>
-    <script>
-        console.log("Lo script è stato caricato correttamente");
-        alert("Il file index.html viene letto dal browser!");
-    </script>
+    <div class="card" id="game">
+        <div id="q-text" class="question">Caricamento...</div>
+        <div id="options"></div>
+        <button id="next" class="btn" style="display:none;">Prossima</button>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
