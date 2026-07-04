@@ -1,20 +1,4 @@
-// --- ALL'AVVIO ---
 
-window.addEventListener('load', () => {
-
-    // Nascondi tutto inizialmente
-
-    document.getElementById('quiz-container').style.display = 'none';
-
-    document.getElementById('payment-container').style.display = 'none';
-
-    
-
-    // Chiama il controllo SOLO qui
-
-    checkAccess();
-
-});
 
 // 1. CONFIGURAZIONE (Inserisci qui le tue chiavi vere!)
 
