@@ -1,9 +1,15 @@
-// 1. CONFIGURAZIONE
+// --- ALL'AVVIO ---
+window.addEventListener('load', () => {
+    // Nascondi tutto inizialmente
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('payment-container').style.display = 'none';
+    
+    // Chiama il controllo SOLO qui
+    checkAccess();
+});
+// 1. CONFIGURAZIONE (Inserisci qui le tue chiavi vere!)
 const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
-
-// --- CORREZIONE CRITICA: Inizializza il client QUI, subito dopo le costanti ---
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 2. VARIABILI DEL QUIZ
 let selectedQuestions = [];
@@ -5314,7 +5320,7 @@ const quizData = [
     
 ];
 
-// 3. FUNZIONI DI INTERFACCIA
+// 3. FUNZIONI DI INTERFACCIA (Gestione Pagina)
 function mostraQuiz() {
     document.getElementById('quiz-container').style.display = 'block';
     document.getElementById('payment-container').style.display = 'none';
@@ -5381,70 +5387,89 @@ function showResults() {
 
 // 5. FUNZIONI PAGAMENTO E ACCESSO
 async function pagaConStars() {
-    if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+    console.log("--- Inizio procedura PagaConStars ---");
+    
+    // 1. Controllo base: siamo dentro Telegram?
+    if (!window.Telegram.WebApp.initDataUnsafe?.user) {
+        console.error("ERRORE: initDataUnsafe non trovato. Stai aprendo il bot da Telegram?");
         alert("Errore: Apri l'app tramite Telegram.");
         return;
     }
+
     window.Telegram.WebApp.MainButton.showProgress();
+
     try {
+        console.log("2. Invio richiesta al server...");
         const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+        
         const response = await fetch('/api/create-invoice', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: userId })
         });
-        if (!response.ok) throw new Error("Risposta server non valida");
+
+        if (!response.ok) throw new Error("Risposta server non valida: " + response.status);
+
         const data = await response.json();
+        console.log("3. Risposta ricevuta:", data);
+
+        if (!data.url) throw new Error("URL mancante nella risposta del server");
+
+        // 4. Apertura Invoice
+        console.log("4. Tentativo apertura Invoice:", data.url);
         window.Telegram.WebApp.openInvoice(data.url, (status) => {
+            console.log("5. Esito pagamento da Telegram:", status);
             if (status === 'paid') {
                 alert("Pagamento riuscito!");
-                checkAccess();
+                mostraQuiz();
             }
         });
+
     } catch (err) {
-        alert("Errore pagamento: " + err.message);
+        console.error("--- ERRORE CRITICO NELLO SCRIPT ---", err);
+        alert("Errore durante il pagamento: " + err.message);
     } finally {
         window.Telegram.WebApp.MainButton.hideProgress();
     }
 }
 
 async function checkAccess() {
-    try {
-        const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        if (!user) {
-            console.log("Non sei in Telegram, mostro test");
-            document.getElementById('payment-container').style.display = 'block';
-            return;
+    // 1. Prendi l'ID utente da Telegram
+    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+    
+    if (!userId) {
+        console.error("Non posso controllare l'accesso senza ID Telegram");
+        return;
+    }
+
+    // 2. Controlla nel DB
+    const { data, error } = await supabase
+        .from('utenti_paganti')
+        .select('*')
+        .eq('telegram_id', userId);
+
+    if (error) {
+        console.error("Errore nel controllo DB:", error);
+        return;
+    }
+
+    // 3. Logica: Se ha pagato (data.length > 0), sblocca
+    const isPaid = data && data.length > 0;
+
+    if (isPaid) {
+        console.log("Utente pagante riconosciuto. Accesso libero.");
+        document.getElementById('payment-container').style.display = 'none';
+        document.getElementById('quiz-container').style.display = 'block';
+        // Se è la prima volta, mostra la prima domanda
+        if (typeof currentIndex === 'undefined' || currentIndex === 0) {
+            mostraDomanda(0);
         }
-
-        const { data, error } = await supabase
-            .from('utenti_paganti')
-            .select('*')
-            .eq('telegram_id', user.id);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            mostraQuiz();
-        } else {
-            mostraPagamento();
-        }
-    } catch (e) {
-        console.error("Errore accesso:", e);
-        // In caso di errore, mostriamo il pagamento per sicurezza
-        mostraPagamento();
+    } else {
+        console.log("Utente non pagante. Mostro pagamento.");
+        document.getElementById('payment-container').style.display = 'block';
+        document.getElementById('quiz-container').style.display = 'none';
     }
 }
-
 // 6. AVVIO FINALE
-window.addEventListener('load', () => {
-    try {
-        if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.expand();
-        }
-        checkAccess();
-    } catch (e) {
-        console.error("Errore critico di avvio", e);
-        document.getElementById('payment-container').style.display = 'block';
-    }
-});
+window.Telegram.WebApp.expand();
+checkAccess();
