@@ -15,6 +15,7 @@
             --danger-bg: #f8d7da;
             --neutral-bg: #f8f9fa;
             --text-main: #333;
+            --grey: #6c757d;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #e9ecef; color: var(--text-main); margin: 0; padding: 10px; display: flex; justify-content: center; }
         .quiz-card { width: 100%; max-width: 650px; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-top: 10px; }
@@ -28,7 +29,7 @@
         .option-item.correct { background-color: var(--success-bg) !important; border-color: var(--success) !important; color: #155724; font-weight: bold; }
         .option-item.wrong { background-color: var(--danger-bg) !important; border-color: var(--danger) !important; color: #721c24; }
         .explanation { margin-top: 20px; padding: 15px; background-color: #e2f0fe; border-left: 5px solid var(--primary); border-radius: 6px; font-size: 15px; line-height: 1.5; display: none; }
-        .action-btn { display: block; width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 25px; transition: background 0.2s; }
+        .action-btn { display: block; width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
         .results-screen { text-align: center; padding: 20px 0; }
         .score-badge { font-size: 48px; font-weight: 800; color: var(--primary); margin: 20px 0; }
     </style>
@@ -54,7 +55,8 @@
         <h1>Esame Completato! 🏖️</h1>
         <div class="score-badge" id="final-score">0.0</div>
         <p id="result-comment"></p>
-        <button class="action-btn" onclick="location.reload()">Ricomincia</button>
+        <button class="action-btn" onclick="location.reload()">Ricomincia Simulazione</button>
+        <button class="action-btn" style="background-color: var(--grey);" onclick="window.Telegram.WebApp.close()">Torna alla chat</button>
     </div>
 </div>
 
@@ -80,7 +82,7 @@ async function initQuiz() {
         currentScore = 0.0;
         loadQuestion();
     } catch (error) {
-        document.getElementById("question-text").innerText = "Errore: impossibile caricare il server. Riprova tra poco (il server potrebbe essere in fase di avvio).";
+        document.getElementById("question-text").innerText = "Errore: impossibile caricare il server.";
         console.error(error);
     }
 }
@@ -133,7 +135,16 @@ function handleNext() {
 function showResults() {
     document.getElementById("quiz-game").style.display = "none";
     document.getElementById("quiz-results").style.display = "block";
-    document.getElementById("final-score").innerText = `${currentScore.toFixed(2)} / ${(activeQuestions.length * 0.5).toFixed(1)}`;
+    
+    const maxScore = (activeQuestions.length * 0.5);
+    document.getElementById("final-score").innerText = `${currentScore.toFixed(2)} / ${maxScore.toFixed(1)}`;
+    
+    const comment = document.getElementById("result-comment");
+    if (currentScore >= (maxScore * 0.6)) {
+        comment.innerText = "Ottimo lavoro! Hai superato la simulazione.";
+    } else {
+        comment.innerText = "Ritenta, la preparazione è la chiave!";
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function() {
