@@ -1,9 +1,50 @@
-// --- 1. CONFIGURAZIONE ---
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulatore d'Esame</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --primary: #0056b3; --primary-hover: #004085; --success: #28a745; --success-bg: #d4edda; --danger: #dc3545; --danger-bg: #f8d7da; --neutral-bg: #f8f9fa; --text-main: #333; }
+        body { font-family: sans-serif; background-color: #e9ecef; color: var(--text-main); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .quiz-card { width: 100%; max-width: 650px; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { font-size: 24px; color: var(--primary); margin: 0 0 10px 0; }
+        .question-box { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+        .options-list { display: flex; flex-direction: column; gap: 12px; }
+        .option-item { background: var(--neutral-bg); border: 2px solid #ced4da; padding: 14px 18px; border-radius: 10px; cursor: pointer; }
+        .option-item.correct { background-color: var(--success-bg) !important; border-color: var(--success) !important; color: #155724; }
+        .option-item.wrong { background-color: var(--danger-bg) !important; border-color: var(--danger) !important; color: #721c24; }
+        .explanation { margin-top: 20px; padding: 15px; background-color: #e2f0fe; border-left: 5px solid var(--primary); display: none; }
+        .action-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 25px; }
+        .results-screen { text-align: center; padding: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card" id="main-container">
+    <div id="quiz-game" style="display: none;">
+        <div class="header">
+            <h1>Simulazione Diritto Commerciale</h1>
+            <div id="progress-text">Domanda 1 di 30</div>
+        </div>
+        <div class="question-box" id="question-text">Caricamento...</div>
+        <div class="options-list" id="options-container"></div>
+        <div class="explanation" id="explanation-box"></div>
+        <button class="action-btn" id="next-btn" style="display: none;" onclick="handleNext()">Prossima Domanda</button>
+    </div>
+    <div id="quiz-results" style="display: none;" class="results-screen">
+        <h1>Esame Completato!</h1>
+        <div id="final-score" style="font-size: 40px; font-weight: bold; margin: 20px 0;">0.0</div>
+        <button class="action-btn" onclick="location.reload()">Riprova</button>
+    </div>
+</div>
+
+<script>
     const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co"; 
     const SUPABASE_ANON_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
-
-    // --- 2. IL TUO DATABASE ---
-const fullDatabase = [
+    const fullDatabase = [
     {
         q: "Il diritto commerciale regola:",
         options: [
@@ -5308,15 +5349,14 @@ le corrente, di regola, tra peso sociale e ammontare del conferimento:",
   
 ];
 
-// Variabili di gioco
-    let activeQuestions = [], currentIndex = 0, currentScore = 0.0, isAnswered = false;
+    let activeQuestions = [...fullDatabase].sort(() => Math.random() - 0.5).slice(0, 30);
+    let currentIndex = 0, currentScore = 0.0, isAnswered = false;
 
-    // --- 3. CONTROLLO ACCESSO ---
     async function checkAccess() {
         const tg = window.Telegram.WebApp;
         tg.expand();
         const userId = tg.initDataUnsafe.user?.id;
-
+        
         if (!userId) {
             document.getElementById("main-container").innerHTML = "<h1>Apri l'app da Telegram</h1>";
             return;
@@ -5330,40 +5370,18 @@ le corrente, di regola, tra peso sociale e ammontare del conferimento:",
 
             if (data.length > 0 && data[0].is_paid === true) {
                 document.getElementById("quiz-game").style.display = "block";
-                initQuiz();
+                loadQuestion();
             } else {
-                showPaywall();
+                document.getElementById("main-container").innerHTML = '<div class="results-screen"><h1>Accesso Richiesto 🔒</h1><button class="action-btn" onclick="window.Telegram.WebApp.sendData(JSON.stringify({action:\'PAY_REQUEST\'}))">Sblocca Quiz (100 Stars)</button></div>';
             }
         } catch (e) {
-            document.body.innerHTML = "<h1>Errore di connessione al database</h1>";
+            document.body.innerHTML = "<h1>Errore di connessione</h1>";
         }
-    }
-
-    function showPaywall() {
-        document.getElementById("main-container").innerHTML = `
-            <div class="results-screen">
-                <h1>Accesso Richiesto 🔒</h1>
-                <p>Per sbloccare il simulatore, procedi con l'acquisto.</p>
-                <button class="action-btn" onclick="requestPayment()">Sblocca Quiz (100 Stars)</button>
-            </div>
-        `;
-    }
-
-    function requestPayment() {
-        window.Telegram.WebApp.sendData(JSON.stringify({ action: "PAY_REQUEST" }));
-    }
-
-    // --- 4. LOGICA GIOCO ---
-    function initQuiz() {
-        activeQuestions = [...fullDatabase].sort(() => Math.random() - 0.5).slice(0, 30);
-        currentIndex = 0; currentScore = 0.0;
-        loadQuestion();
     }
 
     function loadQuestion() {
         isAnswered = false;
         const q = activeQuestions[currentIndex];
-        document.getElementById("progress-text").innerText = `Domanda ${currentIndex + 1} di 30`;
         document.getElementById("question-text").innerText = q.q;
         const container = document.getElementById("options-container");
         container.innerHTML = "";
@@ -5384,25 +5402,22 @@ le corrente, di regola, tra peso sociale e ammontare del conferimento:",
         isAnswered = true;
         if (opt.correct) { el.classList.add("correct"); currentScore += 0.5; } 
         else { el.classList.add("wrong"); }
-        document.getElementById("score-text").innerText = `Punti: ${currentScore.toFixed(1)}`;
-        const exp = document.getElementById("explanation-box");
-        exp.innerHTML = `<strong>Spiegazione:</strong> ${opt.info}`;
-        exp.style.display = "block";
+        document.getElementById("explanation-box").innerHTML = "<strong>Spiegazione:</strong> " + opt.info;
+        document.getElementById("explanation-box").style.display = "block";
         document.getElementById("next-btn").style.display = "block";
     }
 
     function handleNext() {
         currentIndex++;
         if (currentIndex < activeQuestions.length) loadQuestion();
-        else showResults();
+        else {
+            document.getElementById("quiz-game").style.display = "none";
+            document.getElementById("quiz-results").style.display = "block";
+            document.getElementById("final-score").innerText = currentScore.toFixed(1);
+        }
     }
-
-    function showResults() {
-        document.getElementById("quiz-game").style.display = "none";
-        document.getElementById("quiz-results").style.display = "block";
-        document.getElementById("final-score").innerText = `${currentScore.toFixed(1)} / 15.0`;
-    }
-
-    function restartQuiz() { location.reload(); }
 
     window.onload = checkAccess;
+</script>
+</body>
+</html>
