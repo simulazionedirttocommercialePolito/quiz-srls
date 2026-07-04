@@ -71,7 +71,6 @@ let activeQuestions = [];
 let currentIndex = 0;
 let currentScore = 0.0;
 let isAnswered = false;
-let sessionToken = null;
 
 async function checkAccess() {
     const initData = window.Telegram.WebApp.initData;
@@ -85,11 +84,6 @@ async function checkAccess() {
         });
 
         const data = await response.json();
-
-        if (data.sessionToken) {
-            sessionToken = data.sessionToken;
-        }
-
         return data.status;
     } catch (e) {
         return 'free';
@@ -134,7 +128,7 @@ async function initQuiz() {
         const response = await fetch(`${BACKEND_URL}/get-questions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionToken })
+            body: JSON.stringify({ initData: window.Telegram.WebApp.initData })
         });
 
         if (!response.ok) {
@@ -226,7 +220,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const status = await checkAccess();
 
-        if (status === 'paid' && sessionToken) {
+        if (status === 'paid') {
             initQuiz();
         } else {
             document.getElementById('pay-btn').style.display = 'block';
