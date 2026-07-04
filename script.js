@@ -1,15 +1,14 @@
-/ 1. CONFIGURAZIONE
+// CONFIGURAZIONE
 const SUPABASE_URL = "https://obghuymvyhgnnolbbsag.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_uJKudvxlpsCwYCb_4wzb5w_2u3HPuic";
 
-// INIZIALIZZAZIONE CLIENT (Il nome corretto è supabaseClient)
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Inizializzazione sicura
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 2. VARIABILI DEL QUIZ
+// VARIABILI
 let selectedQuestions = [];
 let currentIndex = 0;
 let score = 0;
-// Inserisci qui il tuo JSON delle domande
 const quizData = [
       {
         q: "Il diritto commerciale regola:",
@@ -5315,10 +5314,16 @@ const quizData = [
     
 ];
 
-// 3. FUNZIONI LOGICA
+// --- FIX: Aggiunta funzione mancante che causava il crash ---
+function mostraDomanda(index) {
+    currentIndex = index;
+    showQuestion();
+}
+
+// FUNZIONI DI PAGINA
 function mostraQuiz() {
-    document.getElementById('payment-container').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'block';
+    document.getElementById('payment-container').style.display = 'none';
 }
 
 function mostraPagamento() {
@@ -5326,32 +5331,100 @@ function mostraPagamento() {
     document.getElementById('payment-container').style.display = 'block';
 }
 
-async function checkAccess() {
-    const user = window.Telegram.WebApp.initDataUnsafe.user;
-    
-    if (!user) {
-        document.getElementById('payment-container').style.display = 'block';
-        return;
+// LOGICA QUIZ
+function startSimulation() {
+    selectedQuestions = [...quizData].sort(() => Math.random() - 0.5).slice(0, 30);
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('quiz-screen').style.display = 'block';
+    showQuestion();
+}
+
+function showQuestion() {
+    const q = selectedQuestions[currentIndex];
+    document.getElementById('progress').innerText = `Domanda ${currentIndex + 1}/30`;
+    document.getElementById('question').innerText = q.q;
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+    document.getElementById('feedback-container').style.display = 'none';
+    q.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.innerText = opt.text;
+        btn.onclick = () => checkAnswer(index, btn);
+        container.appendChild(btn);
+    });
+}
+
+function checkAnswer(index, btn) {
+    const q = selectedQuestions[currentIndex];
+    const isCorrect = q.options[index].correct;
+    document.querySelectorAll('#options-container button').forEach(b => b.disabled = true);
+    if (isCorrect) {
+        score += 0.5;
+        btn.classList.add('correct');
+        document.getElementById('result-text').innerText = "Corretto! +0.5 punti";
+    } else {
+        btn.classList.add('wrong');
+        document.getElementById('result-text').innerText = "Sbagliato!";
     }
+    document.getElementById('info-box').innerText = q.info;
+    document.getElementById('feedback-container').style.display = 'block';
+}
 
-    try {
-        const { data, error } = await supabaseClient
-            .from('utenti_paganti')
-            .select('*')
-            .eq('telegram_id', user.id);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-            document.getElementById('quiz-container').style.display = 'block';
-        } else {
-            document.getElementById('payment-container').style.display = 'block';
-        }
-    } catch (err) {
-        console.error("Errore DB:", err);
-        document.getElementById('payment-container').style.display = 'block';
+function nextQuestion() {
+    currentIndex++;
+    if (currentIndex < selectedQuestions.length) {
+        showQuestion();
+    } else {
+        showResults();
     }
 }
 
+function showResults() {
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'block';
+    document.getElementById('final-score').innerText = `Il tuo punteggio finale è: ${score} / 15`;
+}
+
+// PAGAMENTO E ACCESSO
+async function pagaConStars() {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    if (!user) return alert("Errore: Apri da Telegram");
+
+    window.Telegram.WebApp.MainButton.showProgress();
+    const response = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+    });
+    const data = await response.json();
+    
+    window.Telegram.WebApp.openInvoice(data.url, (status) => {
+        if (status === 'paid') {
+            checkAccess();
+        }
+    });
+    window.Telegram.WebApp.MainButton.hideProgress();
+}
+
+async function checkAccess() {
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    if (!user) {
+        mostraPagamento();
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('utenti_paganti')
+        .select('*')
+        .eq('telegram_id', user.id);
+
+    if (error || !data || data.length === 0) {
+        mostraPagamento();
+    } else {
+        mostraQuiz();
+    }
+}
+
+// AVVIO
 window.Telegram.WebApp.expand();
 checkAccess();
