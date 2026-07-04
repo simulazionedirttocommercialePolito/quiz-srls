@@ -5315,18 +5315,16 @@ const quizData = [
     
 ];
 
-// 3. LOGICA DI CONTROLLO (La parte che funzionava)
 async function checkAccess() {
-    // Prendiamo l'ID da Telegram
     const user = window.Telegram.WebApp.initDataUnsafe.user;
-    
+
     // Se non sei su Telegram, per sicurezza mostriamo il pagamento
     if (!user) {
         document.getElementById('payment-container').style.display = 'block';
         return;
     }
 
-    // Interroghiamo il database
+    // Usiamo 'db' (il client), non 'supabase'
     const { data, error } = await db
         .from('utenti_paganti')
         .select('*')
@@ -5337,7 +5335,6 @@ async function checkAccess() {
         return;
     }
 
-    // Se troviamo l'utente, sblocchiamo
     if (data && data.length > 0) {
         document.getElementById('payment-container').style.display = 'none';
         document.getElementById('quiz-container').style.display = 'block';
@@ -5347,7 +5344,7 @@ async function checkAccess() {
     }
 }
 
-// 4. PAGAMENTO
+// FUNZIONE PAGAMENTO
 async function pagaConStars() {
     window.Telegram.WebApp.MainButton.showProgress();
     const userId = window.Telegram.WebApp.initDataUnsafe.user.id;
@@ -5362,12 +5359,12 @@ async function pagaConStars() {
     
     window.Telegram.WebApp.openInvoice(data.url, (status) => {
         if (status === 'paid') {
-            checkAccess(); // Ricarica lo stato
+            checkAccess();
         }
     });
     window.Telegram.WebApp.MainButton.hideProgress();
 }
 
-// 5. AVVIO
+// AVVIO
 window.Telegram.WebApp.expand();
 checkAccess();
