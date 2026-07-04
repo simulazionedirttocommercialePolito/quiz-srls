@@ -2,8 +2,9 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulatore d'Esame Completo - 30 Domande</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulatore d'Esame</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --primary: #0056b3;
@@ -33,126 +34,50 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             margin-top: 10px;
         }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #dee2e6;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        h1 {
-            font-size: 24px;
-            color: var(--primary);
-            margin: 0 0 10px 0;
-        }
-        .stats-bar {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            color: #6c757d;
-            font-weight: 600;
-        }
-        .question-box {
-            font-size: 18px;
-            font-weight: 700;
-            line-height: 1.4;
-            margin-bottom: 20px;
-        }
-        .options-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .option-item {
-            background: var(--neutral-bg);
-            border: 2px solid #ced4da;
-            padding: 14px 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .option-item:hover {
-            border-color: var(--primary);
-            background-color: #f1f7fe;
-        }
-        .option-item.correct {
-            background-color: var(--success-bg) !important;
-            border-color: var(--success) !important;
-            color: #155724;
-            font-weight: bold;
-        }
-        .option-item.wrong {
-            background-color: var(--danger-bg) !important;
-            border-color: var(--danger) !important;
-            color: #721c24;
-        }
-        .explanation {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e2f0fe;
-            border-left: 5px solid var(--primary);
-            border-radius: 6px;
-            font-size: 15px;
-            line-height: 1.5;
-            display: none;
-        }
-        .action-btn {
-            display: block;
-            width: 100%;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 25px;
-            transition: background 0.2s;
-        }
-        .action-btn:hover {
-            background: var(--primary-hover);
-        }
-        .results-screen {
-            text-align: center;
-            padding: 20px 0;
-        }
-        .score-badge {
-            font-size: 48px;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 20px 0;
-        }
+        .header { text-align: center; border-bottom: 2px solid #dee2e6; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { font-size: 24px; color: var(--primary); margin: 0 0 10px 0; }
+        .stats-bar { display: flex; justify-content: space-between; font-size: 14px; color: #6c757d; font-weight: 600; }
+        .question-box { font-size: 18px; font-weight: 700; line-height: 1.4; margin-bottom: 20px; }
+        .options-list { display: flex; flex-direction: column; gap: 12px; }
+        .option-item { background: var(--neutral-bg); border: 2px solid #ced4da; padding: 14px 18px; border-radius: 10px; cursor: pointer; font-size: 16px; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        .option-item:hover { border-color: var(--primary); background-color: #f1f7fe; }
+        .option-item.correct { background-color: var(--success-bg) !important; border-color: var(--success) !important; color: #155724; font-weight: bold; }
+        .option-item.wrong { background-color: var(--danger-bg) !important; border-color: var(--danger) !important; color: #721c24; }
+        .explanation { margin-top: 20px; padding: 15px; background-color: #e2f0fe; border-left: 5px solid var(--primary); border-radius: 6px; font-size: 15px; line-height: 1.5; display: none; }
+        .action-btn { display: block; width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; margin-top: 25px; transition: background 0.2s; }
+        .action-btn:hover { background: var(--primary-hover); }
+        .results-screen { text-align: center; padding: 20px 0; }
+        .score-badge { font-size: 48px; font-weight: 800; color: var(--primary); margin: 20px 0; }
     </style>
 </head>
 <body>
 
-<div class="quiz-card">
+<div class="quiz-card" id="main-content">
     <div id="quiz-game">
         <div class="header">
             <h1>Simulazione Diritto Commerciale</h1>
             <div class="stats-bar">
-                <span id="progress-text">Domanda 1 di 30</span>
+                <span id="progress-text">Caricamento...</span>
                 <span id="score-text">Punti: 0.0</span>
             </div>
         </div>
-        <div class="question-box" id="question-text">Caricamento della domanda...</div>
+        <div class="question-box" id="question-text">Caricamento...</div>
         <div class="options-list" id="options-container"></div>
-        <div class="info" id="explanation-box"></div>
+        <div class="explanation" id="explanation-box"></div>
         <button class="action-btn" id="next-btn" style="display: none;" onclick="handleNext()">Prossima Domanda</button>
     </div>
 
     <div id="quiz-results" style="display: none;" class="results-screen">
         <h1>Esame Completato! 🏖️</h1>
-        <p>Hai risposto alle 30 domande d'esame estratte casualmente.</p>
+        <p>Hai risposto alle 30 domande d'esame.</p>
         <div class="score-badge" id="final-score">0.0 / 15.0</div>
         <p id="result-comment"></p>
-        <button class="action-btn" onclick="restartQuiz()">Inizia Nuova Simulazione Casuale</button>
+        <button class="action-btn" onclick="restartQuiz()">Inizia Nuova Simulazione</button>
     </div>
 </div>
 
 <script>
+// --- DATABASE ---
 const fullDatabase = [
     {
         q: "Il diritto commerciale regola:",
@@ -5511,7 +5436,6 @@ function selectOption(element, option) {
     isAnswered = true;
 
     const items = document.querySelectorAll(".option-item");
-    
     if (option.correct) {
         element.classList.add("correct");
         currentScore += 0.50;
@@ -5523,37 +5447,24 @@ function selectOption(element, option) {
     }
 
     document.getElementById("score-text").innerText = `Punti: ${currentScore.toFixed(2)}`;
-    
     const expBox = document.getElementById("explanation-box");
-    expBox.innerHTML = `<strong>Spiegazione approfondita:</strong> ${option.info}`;
+    expBox.innerHTML = `<strong>Spiegazione:</strong> ${option.info}`;
     expBox.style.display = "block";
-    
     document.getElementById("next-btn").style.display = "block";
 }
 
 function handleNext() {
     currentIndex++;
-    if (currentIndex < activeQuestions.length) {
-        loadQuestion();
-    } else {
-        showResults();
-    }
+    if (currentIndex < activeQuestions.length) loadQuestion();
+    else showResults();
 }
 
 function showResults() {
     document.getElementById("quiz-game").style.display = "none";
     document.getElementById("quiz-results").style.display = "block";
-    
     const finalBadge = document.getElementById("final-score");
-    const maxScore = (activeQuestions.length * 0.5).toFixed(1);
-    finalBadge.innerText = `${currentScore.toFixed(2)} / ${maxScore}`;
-    
-    const comment = document.getElementById("result-comment");
-    if (currentScore >= 9.0) {
-        comment.innerText = "Complimenti! Esame superato con successo.";
-    } else {
-        comment.innerText = "Punteggio insufficiente. Fai un altro giro di simulazione per fissare i concetti!";
-    }
+    finalBadge.innerText = `${currentScore.toFixed(2)} / ${(activeQuestions.length * 0.5).toFixed(1)}`;
+    document.getElementById("result-comment").innerText = currentScore >= 9.0 ? "Ottimo! Esame superato." : "Riprova per migliorare!";
 }
 
 function restartQuiz() {
@@ -5562,7 +5473,22 @@ function restartQuiz() {
     initQuiz();
 }
 
-window.onload = initQuiz;
+// --- CONTROLLO ACCESSO TELEGRAM ---
+document.addEventListener("DOMContentLoaded", function() {
+    const isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData;
+    
+    if (!isTelegram) {
+        document.body.innerHTML = `
+            <div style="text-align: center; margin-top: 50px; font-family: sans-serif; padding: 20px;">
+                <h1>Accesso non consentito</h1>
+                <p>Questa applicazione è disponibile solo all'interno di Telegram.</p>
+            </div>
+        `;
+    } else {
+        window.Telegram.WebApp.ready();
+        initQuiz();
+    }
+});
 </script>
 
 </body>
