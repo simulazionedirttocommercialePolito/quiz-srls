@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulatore d'Esame</title>
+    <title>Simulazione d'Esame</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -77,7 +77,10 @@ async function initQuiz() {
         if (!response.ok) throw new Error("Server non raggiungibile");
 
         const data = await response.json();
-        activeQuestions = data.questions; 
+        
+        // Randomizzazione e limite gestiti qui lato client
+        activeQuestions = data.questions.sort(() => 0.5 - Math.random()).slice(0, 30);
+        
         currentIndex = 0;
         currentScore = 0.0;
         loadQuestion();
